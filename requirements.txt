@@ -1,0 +1,4 @@
+pydantic
+graphviz
+google-genai
+python-dotenv

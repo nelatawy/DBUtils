@@ -1,0 +1,38 @@
+{
+  "_comment": "Four levels of composition: Address (level 1) > Region (2) > City (3) > Name/Code/Latitude/Longitude (4). Flags also appear on deeper levels.",
+  "entities": [
+    {
+      "name": "Person",
+      "attributes": [
+        { "name": "ID", "isPrimaryKey": true },
+        {
+          "name": "Address",
+          "composite": [
+            "Country",
+            {
+              "name": "Region",
+              "composite": [
+                "RegionName",
+                {
+                  "name": "City",
+                  "isMultiValued": true,
+                  "composite": [
+                    "CityName",
+                    "PostalCode",
+                    { "name": "Distance", "isDerived": true },
+                    {
+                      "name": "Coordinates",
+                      "composite": ["Latitude", "Longitude"]
+                    }
+                  ]
+                }
+              ]
+            },
+            "Street"
+          ]
+        }
+      ]
+    }
+  ],
+  "relationships": []
+}

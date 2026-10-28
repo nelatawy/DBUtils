@@ -1,0 +1,15 @@
+{
+  "_comment": "One entity, one attribute, no relationships.",
+  "entities": [
+    {
+      "name": "Student",
+      "attributes": [
+        {
+          "name": "ID",
+          "isPrimaryKey": true
+        }
+      ]
+    }
+  ],
+  "relationships": []
+}

@@ -1,0 +1,55 @@
+{
+  "_comment": "Composite key: a single attribute that is both isPrimaryKey and composite.",
+  "entities": [
+    {
+      "name": "Flight",
+      "attributes": [
+        {
+          "name": "FlightID",
+          "isPrimaryKey": true,
+          "composite": [
+            "AirlineCode",
+            "FlightNumber"
+          ]
+        },
+        {
+          "name": "DepartureTime"
+        }
+      ]
+    },
+    {
+      "name": "Airport",
+      "attributes": [
+        {
+          "name": "Code",
+          "isPrimaryKey": true
+        },
+        {
+          "name": "Name"
+        },
+        {
+          "name": "City"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "name": "Departs_From",
+      "links": [
+        {
+          "entity": "Flight",
+          "cardinality": "N",
+          "participation": "total",
+          "role": "flight"
+        },
+        {
+          "entity": "Airport",
+          "cardinality": "1",
+          "participation": "partial",
+          "role": "airport"
+        }
+      ]
+    }
+  ]
+}

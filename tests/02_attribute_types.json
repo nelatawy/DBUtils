@@ -1,0 +1,69 @@
+{
+  "_comment": "Every attribute type on one entity: simple, key, multivalued, derived, composite, composite+multivalued, nested composite, composite key, derived+multivalued.",
+  "entities": [
+    {
+      "name": "AttributeZoo",
+      "attributes": [
+        {
+          "name": "ID",
+          "isPrimaryKey": true
+        },
+        {
+          "name": "Title"
+        },
+        {
+          "name": "Phone",
+          "isMultiValued": true
+        },
+        {
+          "name": "Age",
+          "isDerived": true
+        },
+        {
+          "name": "Name",
+          "composite": [
+            "FirstName",
+            "MiddleName",
+            "LastName"
+          ]
+        },
+        {
+          "name": "Address",
+          "isMultiValued": true,
+          "composite": [
+            "Street",
+            "City",
+            "ZIP"
+          ]
+        },
+        {
+          "name": "Location",
+          "composite": [
+            "Country",
+            {
+              "name": "City",
+              "composite": [
+                "Name",
+                "Code"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "PassportNo",
+          "isPrimaryKey": true,
+          "composite": [
+            "Country",
+            "Number"
+          ]
+        },
+        {
+          "name": "YearsOfService",
+          "isMultiValued": true,
+          "isDerived": true
+        }
+      ]
+    }
+  ],
+  "relationships": []
+}

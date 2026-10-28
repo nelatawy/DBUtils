@@ -1,0 +1,111 @@
+{
+  "_comment": "All four total/partial participation combinations.",
+  "entities": [
+    {
+      "name": "Employee",
+      "attributes": [
+        {
+          "name": "ID",
+          "isPrimaryKey": true
+        }
+      ]
+    },
+    {
+      "name": "Department",
+      "attributes": [
+        {
+          "name": "ID",
+          "isPrimaryKey": true
+        }
+      ]
+    },
+    {
+      "name": "Project",
+      "attributes": [
+        {
+          "name": "ID",
+          "isPrimaryKey": true
+        }
+      ]
+    },
+    {
+      "name": "Office",
+      "attributes": [
+        {
+          "name": "ID",
+          "isPrimaryKey": true
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "name": "Works_In",
+      "links": [
+        {
+          "entity": "Employee",
+          "cardinality": "N",
+          "participation": "total",
+          "role": "employee"
+        },
+        {
+          "entity": "Department",
+          "cardinality": "1",
+          "participation": "partial",
+          "role": "department"
+        }
+      ]
+    },
+    {
+      "name": "Controls",
+      "links": [
+        {
+          "entity": "Department",
+          "cardinality": "1",
+          "participation": "total",
+          "role": "department"
+        },
+        {
+          "entity": "Project",
+          "cardinality": "N",
+          "participation": "total",
+          "role": "project"
+        }
+      ]
+    },
+    {
+      "name": "Works_On",
+      "links": [
+        {
+          "entity": "Employee",
+          "cardinality": "M",
+          "participation": "partial",
+          "role": "employee"
+        },
+        {
+          "entity": "Project",
+          "cardinality": "N",
+          "participation": "partial",
+          "role": "project"
+        }
+      ]
+    },
+    {
+      "name": "Assigned_To",
+      "links": [
+        {
+          "entity": "Employee",
+          "cardinality": "1",
+          "participation": "partial",
+          "role": "employee"
+        },
+        {
+          "entity": "Office",
+          "cardinality": "1",
+          "participation": "total",
+          "role": "office"
+        }
+      ]
+    }
+  ]
+}

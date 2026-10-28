@@ -1,0 +1,88 @@
+{
+  "_comment": "Recursive (unary) relationships with roles: 1:N, 1:1, M:N.",
+  "entities": [
+    {
+      "name": "Employee",
+      "attributes": [
+        {
+          "name": "SSN",
+          "isPrimaryKey": true
+        },
+        {
+          "name": "Name"
+        }
+      ]
+    },
+    {
+      "name": "Person",
+      "attributes": [
+        {
+          "name": "NationalID",
+          "isPrimaryKey": true
+        }
+      ]
+    },
+    {
+      "name": "Course",
+      "attributes": [
+        {
+          "name": "Code",
+          "isPrimaryKey": true
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "name": "Supervises",
+      "links": [
+        {
+          "entity": "Employee",
+          "cardinality": "1",
+          "participation": "partial",
+          "role": "supervisor"
+        },
+        {
+          "entity": "Employee",
+          "cardinality": "N",
+          "participation": "partial",
+          "role": "subordinate"
+        }
+      ]
+    },
+    {
+      "name": "Married_To",
+      "links": [
+        {
+          "entity": "Person",
+          "cardinality": "1",
+          "participation": "partial",
+          "role": "supervisor"
+        },
+        {
+          "entity": "Person",
+          "cardinality": "1",
+          "participation": "partial",
+          "role": "subordinate"
+        }
+      ]
+    },
+    {
+      "name": "Prerequisite_Of",
+      "links": [
+        {
+          "entity": "Course",
+          "cardinality": "M",
+          "participation": "partial",
+          "role": "prereq"
+        },
+        {
+          "entity": "Course",
+          "cardinality": "N",
+          "participation": "partial",
+          "role": "dependent"
+        }
+      ]
+    }
+  ]
+}

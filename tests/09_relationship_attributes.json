@@ -1,0 +1,98 @@
+{
+  "_comment": "Relationships that carry their own attributes (simple, derived, multivalued).",
+  "entities": [
+    {
+      "name": "Student",
+      "attributes": [
+        {
+          "name": "ID",
+          "isPrimaryKey": true
+        }
+      ]
+    },
+    {
+      "name": "Course",
+      "attributes": [
+        {
+          "name": "Code",
+          "isPrimaryKey": true
+        }
+      ]
+    },
+    {
+      "name": "Employee",
+      "attributes": [
+        {
+          "name": "SSN",
+          "isPrimaryKey": true
+        }
+      ]
+    },
+    {
+      "name": "Department",
+      "attributes": [
+        {
+          "name": "DeptID",
+          "isPrimaryKey": true
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "name": "Enrolls",
+      "attributes": [
+        {
+          "name": "Grade"
+        },
+        {
+          "name": "EnrollDate"
+        }
+      ],
+      "links": [
+        {
+          "entity": "Student",
+          "cardinality": "M",
+          "participation": "partial",
+          "role": "student"
+        },
+        {
+          "entity": "Course",
+          "cardinality": "N",
+          "participation": "partial",
+          "role": "course"
+        }
+      ]
+    },
+    {
+      "name": "Works_In",
+      "attributes": [
+        {
+          "name": "StartDate"
+        },
+        {
+          "name": "Duration",
+          "isDerived": true
+        },
+        {
+          "name": "Notes",
+          "isMultiValued": true
+        }
+      ],
+      "links": [
+        {
+          "entity": "Employee",
+          "cardinality": "N",
+          "participation": "partial",
+          "role": "employee"
+        },
+        {
+          "entity": "Department",
+          "cardinality": "1",
+          "participation": "partial",
+          "role": "department"
+        }
+      ]
+    }
+  ]
+}

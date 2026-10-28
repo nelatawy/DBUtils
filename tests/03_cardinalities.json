@@ -1,0 +1,182 @@
+{
+  "_comment": "All binary cardinalities: 1:1, 1:N, N:1, M:N, N:M.",
+  "entities": [
+    {
+      "name": "Person",
+      "attributes": [
+        {
+          "name": "ID",
+          "isPrimaryKey": true
+        }
+      ]
+    },
+    {
+      "name": "Passport",
+      "attributes": [
+        {
+          "name": "ID",
+          "isPrimaryKey": true
+        }
+      ]
+    },
+    {
+      "name": "Customer",
+      "attributes": [
+        {
+          "name": "ID",
+          "isPrimaryKey": true
+        }
+      ]
+    },
+    {
+      "name": "Order",
+      "attributes": [
+        {
+          "name": "ID",
+          "isPrimaryKey": true
+        }
+      ]
+    },
+    {
+      "name": "Employee",
+      "attributes": [
+        {
+          "name": "ID",
+          "isPrimaryKey": true
+        }
+      ]
+    },
+    {
+      "name": "Department",
+      "attributes": [
+        {
+          "name": "ID",
+          "isPrimaryKey": true
+        }
+      ]
+    },
+    {
+      "name": "Student",
+      "attributes": [
+        {
+          "name": "ID",
+          "isPrimaryKey": true
+        }
+      ]
+    },
+    {
+      "name": "Course",
+      "attributes": [
+        {
+          "name": "ID",
+          "isPrimaryKey": true
+        }
+      ]
+    },
+    {
+      "name": "Author",
+      "attributes": [
+        {
+          "name": "ID",
+          "isPrimaryKey": true
+        }
+      ]
+    },
+    {
+      "name": "Book",
+      "attributes": [
+        {
+          "name": "ID",
+          "isPrimaryKey": true
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "name": "Holds",
+      "links": [
+        {
+          "entity": "Person",
+          "cardinality": "1",
+          "participation": "partial",
+          "role": "person"
+        },
+        {
+          "entity": "Passport",
+          "cardinality": "1",
+          "participation": "partial",
+          "role": "passport"
+        }
+      ]
+    },
+    {
+      "name": "Places",
+      "links": [
+        {
+          "entity": "Customer",
+          "cardinality": "1",
+          "participation": "partial",
+          "role": "customer"
+        },
+        {
+          "entity": "Order",
+          "cardinality": "N",
+          "participation": "partial",
+          "role": "order"
+        }
+      ]
+    },
+    {
+      "name": "Works_In",
+      "links": [
+        {
+          "entity": "Employee",
+          "cardinality": "N",
+          "participation": "partial",
+          "role": "employee"
+        },
+        {
+          "entity": "Department",
+          "cardinality": "1",
+          "participation": "partial",
+          "role": "department"
+        }
+      ]
+    },
+    {
+      "name": "Enrolls",
+      "links": [
+        {
+          "entity": "Student",
+          "cardinality": "M",
+          "participation": "partial",
+          "role": "student"
+        },
+        {
+          "entity": "Course",
+          "cardinality": "N",
+          "participation": "partial",
+          "role": "course"
+        }
+      ]
+    },
+    {
+      "name": "Writes",
+      "links": [
+        {
+          "entity": "Author",
+          "cardinality": "N",
+          "participation": "partial",
+          "role": "author"
+        },
+        {
+          "entity": "Book",
+          "cardinality": "M",
+          "participation": "partial",
+          "role": "book"
+        }
+      ]
+    }
+  ]
+}

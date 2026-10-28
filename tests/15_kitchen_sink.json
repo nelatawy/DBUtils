@@ -1,0 +1,255 @@
+{
+  "_comment": "Company database using every feature together.",
+  "entities": [
+    {
+      "name": "Employee",
+      "attributes": [
+        {
+          "name": "SSN",
+          "isPrimaryKey": true
+        },
+        {
+          "name": "Name",
+          "composite": [
+            "FirstName",
+            "LastName"
+          ]
+        },
+        {
+          "name": "Phone",
+          "isMultiValued": true
+        },
+        {
+          "name": "Address",
+          "composite": [
+            "Street",
+            "City",
+            "State",
+            "ZIP"
+          ]
+        },
+        {
+          "name": "Age",
+          "isDerived": true
+        },
+        {
+          "name": "Salary"
+        }
+      ]
+    },
+    {
+      "name": "Department",
+      "attributes": [
+        {
+          "name": "DeptID",
+          "isPrimaryKey": true
+        },
+        {
+          "name": "Name"
+        },
+        {
+          "name": "Location",
+          "isMultiValued": true
+        },
+        {
+          "name": "NumberOfEmployees",
+          "isDerived": true
+        }
+      ]
+    },
+    {
+      "name": "Project",
+      "attributes": [
+        {
+          "name": "ProjNo",
+          "isPrimaryKey": true
+        },
+        {
+          "name": "Name"
+        },
+        {
+          "name": "Location"
+        }
+      ]
+    },
+    {
+      "name": "Dependent",
+      "isWeak": true,
+      "attributes": [
+        {
+          "name": "Name",
+          "isPartialKey": true
+        },
+        {
+          "name": "Age"
+        },
+        {
+          "name": "Gender"
+        }
+      ]
+    },
+    {
+      "name": "Supplier",
+      "attributes": [
+        {
+          "name": "ID",
+          "isPrimaryKey": true
+        }
+      ]
+    },
+    {
+      "name": "Part",
+      "attributes": [
+        {
+          "name": "ID",
+          "isPrimaryKey": true
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "name": "Works_In",
+      "links": [
+        {
+          "entity": "Employee",
+          "cardinality": "N",
+          "participation": "total",
+          "role": "employee"
+        },
+        {
+          "entity": "Department",
+          "cardinality": "1",
+          "participation": "partial",
+          "role": "department"
+        }
+      ]
+    },
+    {
+      "name": "Manages",
+      "attributes": [
+        {
+          "name": "StartDate"
+        }
+      ],
+      "links": [
+        {
+          "entity": "Employee",
+          "cardinality": "1",
+          "participation": "partial",
+          "role": "employee"
+        },
+        {
+          "entity": "Department",
+          "cardinality": "1",
+          "participation": "total",
+          "role": "department"
+        }
+      ]
+    },
+    {
+      "name": "Works_On",
+      "attributes": [
+        {
+          "name": "Hours"
+        }
+      ],
+      "links": [
+        {
+          "entity": "Employee",
+          "cardinality": "M",
+          "participation": "partial",
+          "role": "employee"
+        },
+        {
+          "entity": "Project",
+          "cardinality": "N",
+          "participation": "partial",
+          "role": "project"
+        }
+      ]
+    },
+    {
+      "name": "Controls",
+      "links": [
+        {
+          "entity": "Department",
+          "cardinality": "1",
+          "participation": "partial",
+          "role": "department"
+        },
+        {
+          "entity": "Project",
+          "cardinality": "N",
+          "participation": "total",
+          "role": "project"
+        }
+      ]
+    },
+    {
+      "name": "Supervises",
+      "links": [
+        {
+          "entity": "Employee",
+          "cardinality": "1",
+          "participation": "partial",
+          "role": "supervisor"
+        },
+        {
+          "entity": "Employee",
+          "cardinality": "N",
+          "participation": "partial",
+          "role": "subordinate"
+        }
+      ]
+    },
+    {
+      "name": "Dependents_Of",
+      "identifies": [
+        "Dependent"
+      ],
+      "links": [
+        {
+          "entity": "Employee",
+          "cardinality": "1",
+          "participation": "partial",
+          "role": "employee"
+        },
+        {
+          "entity": "Dependent",
+          "cardinality": "N",
+          "participation": "total",
+          "role": "dependent"
+        }
+      ]
+    },
+    {
+      "name": "Supplies",
+      "attributes": [
+        {
+          "name": "Quantity"
+        }
+      ],
+      "links": [
+        {
+          "entity": "Supplier",
+          "cardinality": "M",
+          "participation": "partial",
+          "role": "role_1"
+        },
+        {
+          "entity": "Part",
+          "cardinality": "N",
+          "participation": "partial",
+          "role": "role_2"
+        },
+        {
+          "entity": "Project",
+          "cardinality": "P",
+          "participation": "partial",
+          "role": "role_3"
+        }
+      ]
+    }
+  ]
+}

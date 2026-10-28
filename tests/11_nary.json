@@ -1,0 +1,160 @@
+{
+  "_comment": "4-ary and 5-ary relationships with roles, to stress layout.",
+  "entities": [
+    {
+      "name": "Store",
+      "attributes": [
+        {
+          "name": "ID",
+          "isPrimaryKey": true
+        }
+      ]
+    },
+    {
+      "name": "Product",
+      "attributes": [
+        {
+          "name": "ID",
+          "isPrimaryKey": true
+        }
+      ]
+    },
+    {
+      "name": "Customer",
+      "attributes": [
+        {
+          "name": "ID",
+          "isPrimaryKey": true
+        }
+      ]
+    },
+    {
+      "name": "Cashier",
+      "attributes": [
+        {
+          "name": "ID",
+          "isPrimaryKey": true
+        }
+      ]
+    },
+    {
+      "name": "Course",
+      "attributes": [
+        {
+          "name": "ID",
+          "isPrimaryKey": true
+        }
+      ]
+    },
+    {
+      "name": "Instructor",
+      "attributes": [
+        {
+          "name": "ID",
+          "isPrimaryKey": true
+        }
+      ]
+    },
+    {
+      "name": "Room",
+      "attributes": [
+        {
+          "name": "ID",
+          "isPrimaryKey": true
+        }
+      ]
+    },
+    {
+      "name": "TimeSlot",
+      "attributes": [
+        {
+          "name": "ID",
+          "isPrimaryKey": true
+        }
+      ]
+    },
+    {
+      "name": "Semester",
+      "attributes": [
+        {
+          "name": "ID",
+          "isPrimaryKey": true
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "name": "Sells",
+      "attributes": [
+        {
+          "name": "Price"
+        },
+        {
+          "name": "Quantity"
+        }
+      ],
+      "links": [
+        {
+          "entity": "Store",
+          "cardinality": "M",
+          "participation": "partial",
+          "role": "role_1"
+        },
+        {
+          "entity": "Product",
+          "cardinality": "N",
+          "participation": "partial",
+          "role": "role_2"
+        },
+        {
+          "entity": "Customer",
+          "cardinality": "P",
+          "participation": "partial",
+          "role": "role_3"
+        },
+        {
+          "entity": "Cashier",
+          "cardinality": "Q",
+          "participation": "partial",
+          "role": "role_4"
+        }
+      ]
+    },
+    {
+      "name": "Schedules",
+      "links": [
+        {
+          "entity": "Course",
+          "cardinality": "M",
+          "participation": "partial",
+          "role": "role_1"
+        },
+        {
+          "entity": "Instructor",
+          "cardinality": "N",
+          "participation": "partial",
+          "role": "role_2"
+        },
+        {
+          "entity": "Room",
+          "cardinality": "P",
+          "participation": "partial",
+          "role": "role_3"
+        },
+        {
+          "entity": "TimeSlot",
+          "cardinality": "Q",
+          "participation": "partial",
+          "role": "role_4"
+        },
+        {
+          "entity": "Semester",
+          "cardinality": "R",
+          "participation": "partial",
+          "role": "role_5"
+        }
+      ]
+    }
+  ]
+}

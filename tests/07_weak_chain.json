@@ -1,0 +1,85 @@
+{
+  "_comment": "Weak entity that depends on another weak entity (multi-level identification).",
+  "entities": [
+    {
+      "name": "Building",
+      "attributes": [
+        {
+          "name": "BuildingID",
+          "isPrimaryKey": true
+        },
+        {
+          "name": "Name"
+        }
+      ]
+    },
+    {
+      "name": "Room",
+      "isWeak": true,
+      "attributes": [
+        {
+          "name": "RoomNo",
+          "isPartialKey": true
+        },
+        {
+          "name": "Floor"
+        }
+      ]
+    },
+    {
+      "name": "Booking",
+      "isWeak": true,
+      "attributes": [
+        {
+          "name": "Slot",
+          "isPartialKey": true
+        },
+        {
+          "name": "BookedBy"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "name": "Contains",
+      "identifies": [
+        "Room"
+      ],
+      "links": [
+        {
+          "entity": "Building",
+          "cardinality": "1",
+          "participation": "partial",
+          "role": "building"
+        },
+        {
+          "entity": "Room",
+          "cardinality": "N",
+          "participation": "total",
+          "role": "room"
+        }
+      ]
+    },
+    {
+      "name": "Reserved_For",
+      "identifies": [
+        "Booking"
+      ],
+      "links": [
+        {
+          "entity": "Room",
+          "cardinality": "1",
+          "participation": "partial",
+          "role": "room"
+        },
+        {
+          "entity": "Booking",
+          "cardinality": "N",
+          "participation": "total",
+          "role": "booking"
+        }
+      ]
+    }
+  ]
+}

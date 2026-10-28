@@ -1,0 +1,55 @@
+{
+  "_comment": "Weak entity with a partial key and an identifying relationship.",
+  "entities": [
+    {
+      "name": "Employee",
+      "attributes": [
+        {
+          "name": "SSN",
+          "isPrimaryKey": true
+        },
+        {
+          "name": "Name"
+        }
+      ]
+    },
+    {
+      "name": "Dependent",
+      "isWeak": true,
+      "attributes": [
+        {
+          "name": "Name",
+          "isPartialKey": true
+        },
+        {
+          "name": "Age"
+        },
+        {
+          "name": "Gender"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "name": "Dependents_Of",
+      "identifies": [
+        "Dependent"
+      ],
+      "links": [
+        {
+          "entity": "Employee",
+          "cardinality": "1",
+          "participation": "partial",
+          "role": "employee"
+        },
+        {
+          "entity": "Dependent",
+          "cardinality": "N",
+          "participation": "total",
+          "role": "dependent"
+        }
+      ]
+    }
+  ]
+}

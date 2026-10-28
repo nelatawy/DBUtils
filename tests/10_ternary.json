@@ -1,0 +1,121 @@
+{
+  "_comment": "Ternary relationships with mixed cardinalities, participation and a relationship attribute.",
+  "entities": [
+    {
+      "name": "Supplier",
+      "attributes": [
+        {
+          "name": "ID",
+          "isPrimaryKey": true
+        }
+      ]
+    },
+    {
+      "name": "Part",
+      "attributes": [
+        {
+          "name": "ID",
+          "isPrimaryKey": true
+        }
+      ]
+    },
+    {
+      "name": "Project",
+      "attributes": [
+        {
+          "name": "ID",
+          "isPrimaryKey": true
+        }
+      ]
+    },
+    {
+      "name": "Doctor",
+      "attributes": [
+        {
+          "name": "ID",
+          "isPrimaryKey": true
+        }
+      ]
+    },
+    {
+      "name": "Patient",
+      "attributes": [
+        {
+          "name": "ID",
+          "isPrimaryKey": true
+        }
+      ]
+    },
+    {
+      "name": "Room",
+      "attributes": [
+        {
+          "name": "ID",
+          "isPrimaryKey": true
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "name": "Supplies",
+      "attributes": [
+        {
+          "name": "Quantity"
+        }
+      ],
+      "links": [
+        {
+          "entity": "Supplier",
+          "cardinality": "M",
+          "participation": "partial",
+          "role": "role_1"
+        },
+        {
+          "entity": "Part",
+          "cardinality": "N",
+          "participation": "partial",
+          "role": "role_2"
+        },
+        {
+          "entity": "Project",
+          "cardinality": "P",
+          "participation": "total",
+          "role": "role_3"
+        }
+      ]
+    },
+    {
+      "name": "Appointment",
+      "attributes": [
+        {
+          "name": "Date"
+        },
+        {
+          "name": "Reason",
+          "isMultiValued": true
+        }
+      ],
+      "links": [
+        {
+          "entity": "Doctor",
+          "cardinality": "M",
+          "participation": "partial",
+          "role": "role_1"
+        },
+        {
+          "entity": "Patient",
+          "cardinality": "N",
+          "participation": "partial",
+          "role": "role_2"
+        },
+        {
+          "entity": "Room",
+          "cardinality": "1",
+          "participation": "partial",
+          "role": "role_3"
+        }
+      ]
+    }
+  ]
+}
