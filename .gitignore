@@ -1,0 +1,15 @@
+# Python bytecode and caches
+__pycache__/
+**/__pycache__/
+*.py[cod]
+
+# Local Python environments
+.venv/
+
+# Local secrets and environment files
+.env
+.env.*
+
+# Generated archives and images
+*.zip
+*.png
