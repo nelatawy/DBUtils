@@ -1,6 +1,6 @@
 # we will use climbing precedence
 from enum import Enum
-
+from ast_models import *
 class OpType(Enum):
     UNARY=1
     BINARY=2
@@ -9,21 +9,6 @@ class Associativity(Enum):
     RTL=1
     LTR=2
 
-
-class AtomicNode:
-    def __init__(self, name : str):
-        self.name = name
-
-class UnaryNode:
-    def __init__ (self, op : str, node):
-        self.operator = op
-        self.first = node
-
-class BinaryNode:
-    def __init__ (self, op : str, first, second):
-        self.operator = op
-        self.first = first
-        self.second = second
 
 
 class QueryParser:

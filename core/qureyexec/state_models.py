@@ -4,7 +4,6 @@ from typing import Self, Dict, Any, List
 class Row(RootModel[Dict[str, Any]]):
     pass
 
-
 class TableState(RootModel[List[Row]]):
     @model_validator(mode="after")
     def enforce_uniform_schema(self) -> Self:
