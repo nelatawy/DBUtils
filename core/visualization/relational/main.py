@@ -3,7 +3,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from visualization.relational.relationalmapper import TableRegistry
+from core.visualization.relational.relational_mapper import TableRegistry
 from visualization.relational.visualization import RelationalVisualizer
 from core.visualization.schema_models import Schema
 
