@@ -10,17 +10,28 @@ class TableState(RootModel[List[Row]]):
     def enforce_uniform_schema(self) -> "TableState":
         if not self.root:
             return self  # Empty tables are valid
-            
-        expected_attributes = set(self.root[0].root.keys())
+
+        def get_type(x : Any):
+            return type(x)
+        
+        expected_attributes = list(self.root[0].root.keys())
+        expected_types = list(map(get_type, self.root[0].root.values()))
         
         # Enforce that every row matches the baseline exactly
         for index, row in enumerate(self.root):
-            current_attributes = set(row.root.keys())
+            current_attributes = list(row.root.keys())
+            current_types = list(map(get_type, row.root.values()))
             if current_attributes != expected_attributes:
                 raise ValueError(
                     "schema_mismatch",
                     f"Row index {index} violates table schema. "
-                    f"Expected attributes {expected_attributes}, but got {current_attributes}."
+                    f"Expected attributes {expected_attributes} with, but got {current_attributes}."
+                )
+            if current_types != expected_types:
+                raise ValueError(
+                    "schema_mismatch",
+                    f"Row index {index} violates table schema. "
+                    f"Expected types {expected_types} with, but got {current_types}."
                 )
         return self
 
