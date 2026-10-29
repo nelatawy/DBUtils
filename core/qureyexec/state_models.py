@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, model_validator, RootModel
+from pydantic import model_validator, RootModel
 from typing import Self, Dict, Any, List
         
 class Row(RootModel[Dict[str, Any]]):
@@ -7,7 +7,7 @@ class Row(RootModel[Dict[str, Any]]):
 
 class TableState(RootModel[List[Row]]):
     @model_validator(mode="after")
-    def enforce_uniform_schema(self) -> "TableState":
+    def enforce_uniform_schema(self) -> Self:
         if not self.root:
             return self  # Empty tables are valid
 
