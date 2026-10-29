@@ -4,7 +4,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import graphviz
-from models import *
+from core.visualization.models import *
 
 
 class ERDVisualizer:

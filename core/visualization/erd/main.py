@@ -1,5 +1,5 @@
 import os
-from models import *
+from core.visualization.models import *
 from visualization.erd.visualization import ERDVisualizer
 from google import genai
 from google.genai import types

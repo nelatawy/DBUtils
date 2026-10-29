@@ -5,7 +5,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from visualization.relational.relationalmapper import TableRegistry
 from visualization.relational.visualization import RelationalVisualizer
-from models import Schema
+from core.visualization.models import Schema
 
 import graphviz
 
