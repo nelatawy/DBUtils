@@ -279,6 +279,10 @@ def main():
         )
         print(f"PASS: {test_name} ({len(result.rows)} rows)")
 
+    def check_query(test_name, query, expected_attributes, expected_rows):
+        result = evaluator.evaluate(QueryParser.parse(query))
+        check_result(test_name, result, expected_attributes, expected_rows)
+
     employees = make_table(
         "Employees",
         ["employee_id", "name", "dept_id", "salary"],
@@ -414,6 +418,62 @@ def main():
     check_result(
         "JOIN -> SELECT -> PROJECT",
         multi_result,
+        ["name", "dept_name"],
+        [[employee[1], department[1]]
+         for employee in employees.rows
+         for department in departments.rows
+         if employee[2] == department[0] and employee[3] >= 100000],
+    )
+
+    # Repeat the same operation coverage from query strings to exercise parsing
+    # and evaluation together, rather than constructing AST nodes by hand.
+    check_query(
+        "QUERY PROJECT",
+        "PROJECT{name,salary} Employees",
+        ["name", "salary"],
+        [[row[1], row[3]] for row in employees.rows],
+    )
+    check_query(
+        "QUERY SELECT",
+        "SELECT[salary >= 100000] Employees",
+        employees.attribs,
+        [row for row in employees.rows if row[3] >= 100000],
+    )
+    check_query(
+        "QUERY JOIN",
+        "Employees JOIN[Employees.dept_id == Departments.dept_id] Departments",
+        employees.attribs + departments.attribs,
+        [employee + department for employee in employees.rows
+         for department in departments.rows if employee[2] == department[0]],
+    )
+    check_query(
+        "QUERY UNION",
+        "Employees UNION ArchivedEmployees",
+        employees.attribs,
+        employees.rows + archived_employees.rows,
+    )
+    check_query(
+        "QUERY INTERSECT",
+        "Employees INTERSECT ArchivedEmployees",
+        employees.attribs,
+        [row for row in employees.rows if row in archived_employees.rows],
+    )
+    check_query(
+        "QUERY DIFFERENCE",
+        "Employees DIFFERENCE ArchivedEmployees",
+        employees.attribs,
+        [row for row in employees.rows if row not in archived_employees.rows],
+    )
+    check_query(
+        "QUERY AGGREGATE",
+        "AGGREGATE{MAX(salary),MIN(salary),AVG(salary)} Employees",
+        ["MAX(salary)", "MIN(salary)", "AVG(salary)"],
+        [[max(salaries), min(salaries), sum(salaries) / len(salaries)]],
+    )
+    check_query(
+        "QUERY JOIN -> SELECT -> PROJECT",
+        "PROJECT{name,dept_name} SELECT[salary >= 100000] "
+        "(Employees JOIN[Employees.dept_id == Departments.dept_id] Departments)",
         ["name", "dept_name"],
         [[employee[1], department[1]]
          for employee in employees.rows

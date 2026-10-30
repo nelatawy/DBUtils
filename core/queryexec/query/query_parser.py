@@ -47,31 +47,30 @@ class QueryParser:
     def __tokenize(query : str):
         tokens = []
 
-        for tok in query.split(" "):
-            base_itr = 0
-            scan_itr = 0
-            ignore = False
-            while scan_itr < len(tok):
-                if tok[scan_itr] == "{" or tok[scan_itr] == "[":
-                    ignore = True
-                elif tok[scan_itr] == "}" or tok[scan_itr] == "]":
-                    ignore = False
+        token = []
+        option_depth = 0
 
-                if ignore:
-                    scan_itr += 1
-                    continue
+        def append_token():
+            if token:
+                tokens.append("".join(token))
+                token.clear()
 
-                if tok[scan_itr] == '(' or tok[scan_itr] == ')':
-                    if scan_itr - base_itr > 0:
-                        tokens.append(tok[base_itr:scan_itr])
+        for char in query:
+            if char in "[{":
+                option_depth += 1
+                token.append(char)
+            elif char in "]}":
+                option_depth -= 1
+                token.append(char)
+            elif option_depth == 0 and char.isspace():
+                append_token()
+            elif option_depth == 0 and char in "()":
+                append_token()
+                tokens.append(char)
+            else:
+                token.append(char)
 
-                    tokens.append(tok[scan_itr])
-                    base_itr = scan_itr + 1
-
-                scan_itr += 1
-            
-            if scan_itr - base_itr > 0:
-                tokens.append(tok[base_itr:scan_itr]) 
+        append_token()
 
         return tokens
 
