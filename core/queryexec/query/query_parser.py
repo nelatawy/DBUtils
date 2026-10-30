@@ -1,6 +1,6 @@
 # we will use climbing precedence
 from enum import Enum
-from ast_models import *
+from core.queryexec.ast_models import *
 class OpType(Enum):
     UNARY=1
     BINARY=2

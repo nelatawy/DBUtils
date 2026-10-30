@@ -1,4 +1,4 @@
-from query_parser import QueryParser
+from core.queryexec.query.query_parser import QueryParser
 from state_models import DatabaseState, TableState
 
 # maps from DatabaseState to python matrices

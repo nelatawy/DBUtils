@@ -1,7 +1,7 @@
 
 class AtomicNode:
-    def __init__(self, name : str):
-        self.name = name
+    def __init__(self, val):
+        self.val = val
 
 class UnaryNode:
     def __init__ (self, op : str, node):

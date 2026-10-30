@@ -1,14 +1,37 @@
-from ast_models import *
+from ..ast_models import *
 
 class ConditionParser:
 
+    def is_number(s):
+        try:
+            float(s)
+            return True
+        except ValueError:
+            return False
+        
+    @staticmethod
+    def __tokenize(condition : str):
+                literal_split = condition.split("\"") #get literals first
+                parts = []
+                # parts with indices 0, 2, 4 etc map to text between literals
+                for i in range(len(literal_split)):
+                    if not len(literal_split[i]):
+                        continue
+                    if i % 2 == 1:
+                        parts.append("\"" + literal_split[i] + "\"") #add qoutations back
+                    else:
+                        parts.extend(filter(lambda x : len(x) > 0, literal_split[i].split(" ")))
+                return parts
+    
     @staticmethod
     def parse(condition : str):
-
+        
         def parse_atomic(condition : str):
             # binary conditions only [ ==, > , <, >= , <= , != ]
-            parts = condition.split(" ")
-            return BinaryNode(parts[1], AtomicNode(parts[0]), AtomicNode(parts[2]))
+            parts = ConditionParser.__tokenize(condition)
+            left = AtomicNode(parts[0])
+            right = AtomicNode(float(parts[2]) if ConditionParser.is_number(parts[2]) else parts[2])
+            return BinaryNode(parts[1], left, right)
         
         def parse_and(condition : str):
             parts = condition.split(" AND ")
