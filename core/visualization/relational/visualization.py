@@ -9,20 +9,20 @@ import itertools
 
 
 class RelationalVisualizer:
-    """Render a normalized relational schema into a graphviz diagram.
+    """Render a normalized relational schema as a Graphviz diagram.
 
     Assumptions:
-        - `TableRegistry` has already been populated via `fromSchema()` and contains `tables` and `refs` built from the schema model.
-        - Each `Table` contains the primary key list in `p_key` and the visible attributes in `attribs`.
-        - Reference edges are already normalized such that every relation has a source and destination table and attribute lists.
+        - `fromSchema()` has populated `TableRegistry.tables` and `TableRegistry.refs`.
+        - Each `Table` stores primary keys in `p_key` and visible columns in `attribs`.
+        - Each reference has normalized source and destination tables and attribute lists.
 
-    Expected behaviour:
-        - Tables are rendered as HTML tables with primary keys underlined.
-        - Foreign-key references are drawn as edges, collapsing direct one-column joins and splitting multi-column references through junction nodes.
+    Expected behavior:
+        - Tables render as HTML tables with underlined primary keys.
+        - Single-column foreign keys use direct edges; composite references use junction nodes.
 
     Raises:
-        - `AttributeError`: if `graph` does not support `node` or `edge` calls.
-        - `KeyError` / `ValueError`: if registry entries or reference attribute lists do not match the expected shape.
+        - `AttributeError`: if `graph` lacks `node` or `edge`.
+        - `KeyError` / `ValueError`: if registry entries or reference attributes have an unexpected shape.
     """
 
     def __init__(self, graph: graphviz.Digraph):
@@ -30,11 +30,11 @@ class RelationalVisualizer:
         self._junction_ids = itertools.count()
 
     def visualize_table(self, table: Table) -> None:
-        """Render a single relational table as a graphviz HTML table node.
+        """Render one relational table as a Graphviz HTML-table node.
 
         Assumptions:
-            - Table attribute names are unique within the table so they can be used as HTML port names.
-            - Primary keys are identified via `table.p_key` and are expected to be a subset of `table.attribs`.
+            - Attribute names are unique and can serve as HTML port names.
+            - `table.p_key` is a subset of `table.attribs`.
 
         Raises:
             - `AttributeError`: if the graph cannot render nodes.
@@ -59,12 +59,12 @@ class RelationalVisualizer:
         """Render a foreign-key relationship between two tables.
 
         Assumptions:
-            - A reference may be either a single-column direct link or a composite FK represented by multiple columns.
-            - If the mapping is recursive, the same table appears as both source and destination; the graph still connects the ports as a self-reference.
+            - A reference is a direct single-column link or a composite foreign key.
+            - Recursive mappings use the same table as source and destination, connecting its ports as a self-reference.
 
         Raises:
             - `AttributeError`: if the graph cannot create edges.
-            - `ValueError`: if the reference does not include any source or destination attributes.
+            - `ValueError`: if source or destination attributes are missing.
         """
         src, dst = reference.source_table.name, reference.dest_table.name
 
@@ -94,11 +94,11 @@ class RelationalVisualizer:
         """Render every table and foreign-key reference in a registry.
 
         Assumptions:
-            - `table_reg.tables` is a dictionary of normalized tables and `table_reg.refs` contains valid `Reference` entries.
-            - The `graph` has already been configured for the desired layout and styling.
+            - `table_reg.tables` contains normalized tables and `table_reg.refs` valid references.
+            - `graph` is already configured with the desired layout and styling.
 
         Raises:
-            - `AttributeError`: if the registry or graph is not in the required shape.
+            - `AttributeError`: if the registry or graph has an unexpected shape.
         """
         for table in table_reg.tables.values():
             self.visualize_table(table)

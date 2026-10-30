@@ -30,7 +30,7 @@ class Attribute(BaseModel):
         description="If this attribute is made of smaller parts, name them here.",
     )
 
-    # make sure the parsed object is valid by enforcing some constraints
+    # Validate the parsed object against attribute constraints.
     @model_validator(mode="after")
     def check_attribute_logic(self) -> Attribute:
         if self.isPrimaryKey and self.isMultiValued:

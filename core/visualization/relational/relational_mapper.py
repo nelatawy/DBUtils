@@ -8,22 +8,22 @@ class Table:
     """Represent a normalized relational table.
 
     Assumptions:
-        - `p_key` stores only the flattened primary-key columns to be used as identifiers and foreign-key anchors.
-        - `attribs` stores the visible non-derived columns plus any foreign-key columns that were added later.
+        - `p_key` contains flattened primary-key columns used as identifiers and foreign-key anchors.
+        - `attribs` contains visible non-derived columns and subsequently added foreign-key columns.
 
-    Expected behaviour:
-        - Primary keys and additional attribute columns can be appended or replaced without disturbing the table name.
+    Expected behavior:
+        - Primary keys and attributes can be replaced or appended without changing the table name.
 
     Raises:
-        - No custom exceptions are raised by this class itself; invalid calls usually come from type misuse outside the class.
+        - No custom exceptions; invalid calls generally result from misuse by callers.
     """
 
-    # keeps track of atomic attribs or (flattened composites and fkeys) and (flattened primary key) only
+    # Store atomic attributes, flattened composites, foreign keys, and flattened primary keys.
     def __init__(self, name : str = ""):
-        """Initialize an empty table shell.
+        """Initialize an empty table.
 
         Assumptions:
-            - The table name is already known and is unique within the registry.
+            - The table name is known and unique in the registry.
         """
         self.name = name
         self.p_key = []
@@ -33,7 +33,7 @@ class Table:
         """Replace the table's primary-key list.
 
         Assumptions:
-            - `p_k` is a list of flattened keys already normalized to the table's column names.
+            - `p_k` contains flattened keys normalized to this table's column names.
         """
         self.p_key = p_k[:]
     
@@ -41,7 +41,7 @@ class Table:
         """Append one or more visible table attributes.
 
         Assumptions:
-            - The input is a list of attribute names that should be visible in the final relational representation.
+            - The input contains attribute names to show in the relational representation.
         """
         self.attribs.extend(attribs)
 
@@ -53,8 +53,8 @@ class Reference:
         """Store a normalized relationship edge.
 
         Assumptions:
-            - `source_attribs` and `dest_attribs` are lists of attributes in matching order.
-            - This class is used to render foreign-key references and does not validate shape beyond assignment.
+            - `source_attribs` and `dest_attribs` are corresponding, ordered attribute lists.
+            - This class stores foreign-key references without validating their shape.
         """
         self.source_table : Table = source_table
         self.source_attrib : list[str] = source_attribs[:]
@@ -64,14 +64,14 @@ class Reference:
         
 
 class TableRegistry:
-    """Build and maintain the set of relational tables and foreign-key references for a schema.
+    """Build and maintain a schema's tables and foreign-key references.
 
     Assumptions:
-        - The schema has already been validated and all participating entities exist.
-        - `fromSchema()` is called once to populate the registry before rendering or inspection.
+        - The schema is validated and all participating entities exist.
+        - Call `fromSchema()` once before rendering or inspection.
 
     Raises:
-        - `ValueError`: for invalid relationship kinds or unsupported cardinality combinations in the conversion logic.
+        - `ValueError`: for invalid relationship kinds or unsupported cardinalities.
     """
     
     def __init__(self):
@@ -80,17 +80,17 @@ class TableRegistry:
         self.refs : list[Reference] = []
 
     def _fk_name(self, target_key: str, link: Link | None = None) -> str:
-        """Generate a stable foreign-key attribute name using the link role if present.
+        """Generate a stable foreign-key name, preferring the link role.
 
         Assumptions:
-            - For a given foreign key, the relationship link itself carries the semantic role and table context.
-            - If no role is present, the table name used by the link acts as the fallback.
+            - The relationship link provides the foreign key's role and table context.
+            - The link's table name is the fallback when no role is set.
 
-        Expected behaviour:
-            - Returns `<role>_<target_key>` when a role exists; otherwise `<source_table>_<target_key>`.
+        Expected behavior:
+            - Returns `<role>_<target_key>` or, without a role, `<source_table>_<target_key>`.
 
         Raises:
-            - No exception is raised here; malformed link objects are simply handled defensively.
+            - No exceptions; malformed links are handled defensively.
         """
         role = None
         source_table = link.entity if link is not None else ""
@@ -104,11 +104,11 @@ class TableRegistry:
         return f"{source_table}_{target_key}"
 
     def __flattenAttrib(self, attrib : Attribute, added_pref : str = "") -> list[str]:
-        """Flatten a nested attribute structure into a list of leaf attribute names.
+        """Flatten nested attributes into leaf names.
 
         Assumptions:
-            - Composite attributes are recursively expanded using their contained field names and the supplied prefix.
-            - String members of a composite attribute are treated as leaf names and do not recurse further.
+            - Composite attributes expand recursively using their field names and the supplied prefix.
+            - String members are leaf names and are not expanded.
         """
         prefix = (added_pref + "_") if added_pref != "" else ""
         if not attrib.composite:
@@ -123,17 +123,17 @@ class TableRegistry:
 
 
     def addEntity(self, entity : Entity):
-        """Create a base table for a regular entity.
+        """Create a base table for an entity.
 
         Assumptions:
-            - Entity attributes are already normalized by the schema model.
-            - Derived attributes are ignored because they are not physically stored.
-            - Multi-valued attributes are not kept in the base entity table but are handled separately.
+            - Entity attributes are normalized by the schema model.
+            - Derived attributes are omitted because they are not stored.
+            - Multivalued attributes are handled separately, not in the base table.
 
         Raises:
-            - `ValueError`: if the entity object is malformed and cannot be processed without required fields.
+            - `ValueError`: if required entity fields are missing or malformed.
         """
-        # first atomic attribs and flattened composites
+        # Add atomic attributes and flattened composites first.
         basic_table : Table = Table(entity.name)
         p_key = None
         for attr in entity.attributes:
@@ -154,12 +154,12 @@ class TableRegistry:
         self.tables[entity.name] = basic_table
         
 
-    # adds a multivalue attribute and link to table denoted by table_name
+    # Add a multivalued attribute and link to its owning table.
     def addMultiValued(self, table_name : str, attr: Attribute):
-        """Create a separate table for a multivalued attribute and preserve its owning table's key.
+        """Create a table for a multivalued attribute, preserving its owner's key.
 
         Assumptions:
-            - The owning table already exists in the registry and contains the source key(s).
+            - The owning table exists in the registry and contains the source key(s).
 
         Raises:
             - `KeyError`: if the owning table is missing from the registry.
@@ -168,7 +168,7 @@ class TableRegistry:
         new_table : Table = Table(table_name + "_" + attr.name + "s")
 
         new_table.addAttribs(self.tables[table_name].p_key)
-        new_table.addAttribs(self.__flattenAttrib(attr)) # all parts of this multivalued attrib
+        new_table.addAttribs(self.__flattenAttrib(attr))  # Add all parts of the multivalued attribute.
 
         new_table.setPrimaryKey(new_table.attribs)
         # consider all attribs in the multivalued table as the pkey if no partial key was given
@@ -178,16 +178,16 @@ class TableRegistry:
                                    self.tables[table_name],
                                    self.tables[table_name].p_key))
 
-    # all tables related should already be created and registered
+    # Participating tables must already be registered.
     def addIdentifying(self, relation : Relationship):
-        """Convert an identifying relationship into a weak-entity-aware table change.
+        """Map an identifying relationship to its weak-entity table.
 
         Assumptions:
-            - The relationship is already marked as identifying and points to a weak entity via `relation.identifies`.
-            - The participating tables already exist in the registry.
+            - `relation.identifies` marks the relationship and names its weak entity.
+            - Participating tables already exist in the registry.
 
-        Expected behaviour:
-            - The identifying entity receives the identifying table's key columns and the relationship attributes are folded into the appropriate table.
+        Expected behavior:
+            - The weak entity receives the identifying key columns; relationship attributes join the appropriate table.
 
         Raises:
             - `ValueError`: if the relationship does not carry an identifying entity.
@@ -206,12 +206,11 @@ class TableRegistry:
 
             if attr.isMultiValued:
                 multivalued_attribs.append(attr)
-                continue #will be added later
+                continue  # Add multivalued attributes later.
 
             relation_attribs.extend(self.__flattenAttrib(attr))
 
-        # Binary identifying relations
-        # Extremely similar logic to creating a 1:1 Relation
+        # Handle binary identifying relationships like 1:1 relationships.
         if len(relation.links) == 2:
             
             first = relation.links[0]
@@ -241,18 +240,18 @@ class TableRegistry:
                 for attr in multivalued_attribs:
                     self.addMultiValued(second_table.name, attr)
 
-        # N-ary identifying relations
+        # Handle n-ary identifying relationships.
         else:   
             self.addNary(relation)
-            # handles the existence of identifying link within
+            # `addNary()` handles the identifying link.
             
-    # adds binary 1:1 relationship
+    # Add a binary 1:1 relationship.
     def addOneToOne(self, relation : Relationship):
-        """Apply the conversion rules for a binary 1:1 relationship.
+        """Map a binary 1:1 relationship.
 
         Assumptions:
-            - Exactly two links are present and both have cardinality `1`.
-            - The total/partial participation flag decides which side gets the foreign key column.
+            - Exactly two links are present, both with cardinality `1`.
+            - Participation determines which side receives the foreign key.
 
         Raises:
             - `ValueError`: if the relationship is not a binary 1:1 link set.
@@ -294,13 +293,13 @@ class TableRegistry:
             for attr in multival_attribs:
                 self.addMultiValued(second_table.name, attr)
         
-    # adds binary 1:N relationship
+    # Add a binary 1:N relationship.
     def addOneToMany(self, relation : Relationship):
-        """Apply the conversion rules for a binary 1:N relationship.
+        """Map a binary 1:N relationship.
 
         Assumptions:
-            - Exactly two links are present and one is cardinality `1` while the other is not.
-            - The side with cardinality `N` keeps the foreign key on the other table in the standard relational mapping.
+            - Exactly two links are present; one has cardinality `1` and the other does not.
+            - The standard mapping places the foreign key in the table on the `N` side.
 
         Raises:
             - `ValueError`: if the relationship is not a binary 1:N link set.
@@ -343,13 +342,13 @@ class TableRegistry:
             for attr in multival_attribs:
                 self.addMultiValued(second_table.name, attr)
     
-    # adds N:M relations or relations with optional MultiValue attribs
+    # Add an N:M relationship or its multivalued attributes.
     def addManyToMany(self, relation : Relationship):
         """Create a junction table for a binary many-to-many relationship.
 
         Assumptions:
-            - Exactly two links are present and neither is cardinality `1`.
-            - The relationship key is the union of the two entity keys, with extra relationship attributes stored beside them.
+            - Exactly two links are present; neither has cardinality `1`.
+            - The key combines both entity keys; relationship attributes are stored alongside them.
 
         Raises:
             - `ValueError`: if the relationship is not a binary M:N relationship.
@@ -368,7 +367,7 @@ class TableRegistry:
         normalized_first_pkey = [self._fk_name(tok, first) for tok in first_table.p_key]
         normalized_second_pkey = [self._fk_name(tok, second) for tok in second_table.p_key]
 
-        # add relation attribs
+        # Add relationship attributes.
         added_attribs = []
         added_attribs.extend(normalized_first_pkey + normalized_second_pkey)
 
@@ -381,7 +380,7 @@ class TableRegistry:
             else:
                 added_attribs.extend(self.__flattenAttrib(attr))
 
-        # add links to both tables
+        # Link the junction table to both entity tables.
         self.refs.append(Reference(rel_table,
                                    normalized_first_pkey,
                                    first_table, first_table.p_key))
@@ -392,7 +391,7 @@ class TableRegistry:
 
 
         self.tables[rel_table.name].addAttribs(added_attribs)
-        # add all atomic and flattened attribs to relation table
+        # Add atomic attributes and flattened composites to the relationship table.
     
 
     def addNary(self, relation : Relationship):
@@ -420,7 +419,7 @@ class TableRegistry:
 
             if attr.isMultiValued:
                 multivalued_attribs.append(attr)
-                continue #will be added later
+                continue  # Add multivalued attributes later.
 
             relation_attribs.extend(self.__flattenAttrib(attr))
 
@@ -431,13 +430,13 @@ class TableRegistry:
         for link in strong_links:
             added_pkeys = [self._fk_name(tok, link) for tok in self.tables[link.entity].p_key]
             p_keys.append(added_pkeys)
-            # add link between relation table and entity that it connects to
+            # Link the relationship table to this entity.
 
         table_name = relation.name
         rel_table = Table(table_name)
 
         
-        # now we have the table and we can connect the links to all strong entities connected and add corr attribs to th table
+        # Connect the table to each strong entity and add its corresponding attributes.
         for p_key, link in zip(p_keys, strong_links):
             rel_table.addAttribs(p_key)
             self.refs.append(Reference(rel_table, 
@@ -450,17 +449,17 @@ class TableRegistry:
         if identified:
             self.tables[identified].addAttribs(rel_table.attribs)
             self.tables[identified].setPrimaryKey(self.tables[identified].p_key + rel_table.attribs)
-        # at this point it's only the primary keys of all srong entities
+        # The table currently contains only strong-entity primary keys.
 
         rel_table.addAttribs(relation_attribs)
-        # then we add simple and flattened composites
+        # Add simple attributes and flattened composites.
 
         self.tables[table_name] = rel_table
-        # add relation table to registry
+        # Register the relationship table.
 
         for attr in multivalued_attribs:
             self.addMultiValued(table_name, attr)
-        # we add multivalued attribs
+        # Add multivalued attributes.
         
         if identified:
             self.refs.append(Reference(self.tables[identified],
@@ -469,39 +468,32 @@ class TableRegistry:
                                     rel_table.p_key))
     
     def fromSchema(self, schema : Schema):
-        """Convert an entire schema into a normalized relational registry.
+        """Convert a schema into a normalized relational registry.
 
         Assumptions:
-            - Entities and relationships are already validated by the schema model.
-            - Identifying relationships are processed first so weak-entity keys are in place before standard relationships are applied.
+            - The schema model has validated all entities and relationships.
+            - Identifying relationships run first to establish weak-entity keys.
 
-        Expected behaviour:
-            - Strong entities are emitted first, then identifying relationships are resolved, followed by standard binary or n-ary relationship mapping.
+        Expected behavior:
+            - Add entities first, resolve identifying relationships, then map standard binary or n-ary relationships.
 
         Raises:
-            - `ValueError`: if any relationship kind is unsupported or if a schema reference is invalid.
+            - `ValueError`: if a relationship kind is unsupported or a schema reference is invalid.
         """
 
-        strong_entities = []
-        weak_entities = []
-
-        # first add strong entities and weak entities (without full pkey) 
-        # adds atomic and cflattened composites as well but multivalued needs to be handled later
+        # Add strong and weak entities; weak keys may be incomplete.
+        # Add atomic attributes and flattened composites; handle multivalued attributes later.
         for entity in schema.entities:
-            if entity.isWeak:
-                weak_entities.append(entity)
-            else:
-                strong_entities.append(entity)
             self.addEntity(entity)
 
         identifying_relations = list(filter(lambda relation : relation.identifies, schema.relationships))
         standard_relations = list(filter(lambda relation : not relation.identifies, schema.relationships))
 
-        # resolve identifying relations first so that we guarantee that all entities have their pkeys set
+        # Resolve identifying relationships first to establish all entity keys.
         for relation in identifying_relations:
             self.addIdentifying(relation)
 
-        # resolves the rest of relations automatically handling all relation attribs
+        # Map remaining relationships, including their attributes.
         for relation in standard_relations:
             if len(relation.links) == 2:
                 first_cardinality = relation.links[0].cardinality

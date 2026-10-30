@@ -25,7 +25,7 @@ Rules go as follows:
 """
 
 def main():
-    # integration with google's gemini
+    # Initialize the Gemini client.
     client = genai.Client(api_key=os.environ.get("GENAI_API_KEY"))
     config = types.GenerateContentConfig(
         system_instruction=GENAI_SYS_INSTRUCTION,
@@ -34,7 +34,7 @@ def main():
         temperature=0.0
     )
 
-    # # STDIN
+    # Read specifications from standard input.
     print("Write your elaborate system specifications in natural language :)")
     lines = []
     input_str = ""
@@ -45,7 +45,7 @@ def main():
         lines.append(input_str)
     input_str = "".join(lines)
 
-    # FILE TESTING
+    # Alternatively, load test input from a file.
     # with open("/home/nelatawy/Projects/DBVisualizer/tests/main_test.json") as f:
     #     input_str = f.read()
 
@@ -63,10 +63,10 @@ def main():
         print(f"An error occured during parsing \n Error : {e}")
         return
 
-    # visualization
+    # Render the schema.
     graph = graphviz.Digraph('ER_Diagram', comment='Generated ER Schema')
 
-    # Global styling configuration
+    # Configure global graph styling.
     graph.attr('node', fontname='Helvetica,Arial,sans-serif', fontsize='10')
     graph.attr('edge', fontname='Helvetica,Arial,sans-serif', fontsize='10')
     graph.attr(rankdir='LR')  # Left-to-Right layout

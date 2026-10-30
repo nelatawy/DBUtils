@@ -11,17 +11,17 @@ class ERDVisualizer:
     """Render an ER schema as a graphviz diagram.
 
     Assumptions:
-        - The schema is already validated with the project models, so names and link targets are assumed to be valid.
-        - A `graphviz.Digraph` instance is supplied and should already be configured with visual styling.
-        - Composite attributes are drawn recursively as child nodes attached to their parent node.
+        - The project models have validated the schema, names, and link targets.
+        - The supplied `graphviz.Digraph` is already styled.
+        - Composite attributes become recursive child nodes.
 
-    Expected behaviour:
-        - Entities become boxed nodes, weak entities gain a double border, attributes become oval child nodes, and relationships become diamond nodes.
-        - Relationship attributes are also visualized as child nodes attached to the relationship diamond.
+    Expected behavior:
+        - Entities are boxes; weak entities have double borders; attributes are ovals; relationships are diamonds.
+        - Relationship attributes are child nodes of their relationship diamonds.
 
     Raises:
-        - `AttributeError`: if a supplied `graph` is not a graphviz.Digraph-like object.
-        - `TypeError`: if a model object is passed in a shape the renderer does not expect.
+        - `AttributeError`: if `graph` is not Graphviz-like.
+        - `TypeError`: if a model object has an unexpected shape.
     """
 
     def __init__(self, graph: graphviz.Digraph):
