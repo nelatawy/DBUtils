@@ -36,18 +36,14 @@ class TableUtils:
         res_table = MappedTable("", None)
         res_table.set_attributes(list(filter(lambda x : x in proj_attr, table.attribs)))
 
-        for i in range(len(table[0])):
-            if table[0][i] in proj_attr:
+        for i, attribute in enumerate(table.attribs):
+            if attribute in proj_attr:
                 selected_indices.add(i)
         
-        for i in range(1, len(table)):
-            row = table[i]
-            mapped_row = []
-            for j in range(len(row)):
-                if j not in selected_indices:
-                    continue
-                mapped_row.append(row[j])
-            res_table.add_row(mapped_row)
+        for row in table.rows:
+            res_table.add_row(
+                [value for index, value in enumerate(row) if index in selected_indices]
+            )
         return res_table
             
     @staticmethod
@@ -75,9 +71,9 @@ class TableUtils:
         natural_join = (isinstance(cond_tree, AtomicNode))
         if natural_join:
             join_attrib = cond_tree.val
-            join_attrib_indices = first.attribs.index(join_attrib), second.attribs.index(join_attrib)
-            if not (join_attrib_indices[0] and join_attrib_indices[1]):
+            if join_attrib not in first.attribs or join_attrib not in second.attribs:
                 raise ValueError("Can't perform natural JOIN if tables don't have the JOIN attribute")
+            join_attrib_indices = first.attribs.index(join_attrib), second.attribs.index(join_attrib)
             
             for row1 in first.rows:
                 for row2 in second.rows:
@@ -117,29 +113,91 @@ class TableUtils:
 
         return res_table            
 
+    @staticmethod
+    def union_tables(first : MappedTable, second : MappedTable) -> MappedTable:
+        if first.attribs != second.attribs:
+            raise ValueError("Tables must be UNION compatible check the arity of both tables and make sure the attributes match")
+
+        res_table = MappedTable("",None)
+        res_table.set_attributes(first.attribs)
+        for row in first.rows:
+            res_table.add_row(row)
+        for row in second.rows:
+            res_table.add_row(row)
+        return res_table
+
+    @staticmethod
+    def intersect_tables(first : MappedTable, second : MappedTable) -> MappedTable:
+        if first.attribs != second.attribs:
+            raise ValueError("Tables must be INTERSECT compatible check the arity of both tables and make sure the attributes match")
+        
+        res_table = MappedTable("",None)
+        res_table.set_attributes(first.attribs)
+
+        first_rows = set([tuple(row) for row in first.rows])
+        second_rows =set([tuple(row) for row in second.rows])
+
+        final_rows = [list(row) for row in first_rows.intersection(second_rows)]
+        # now we have final list of rows
+        for row in final_rows:
+            res_table.add_row(row)
+        
+        return res_table
+
+    @staticmethod
+    def difference_table(first : MappedTable, second : MappedTable) -> MappedTable:
+        if first.attribs != second.attribs:
+            raise ValueError("Tables must be DIFFERENCE compatible check the arity of both tables and make sure the attributes match")
+        
+        res_table = MappedTable("",None)
+        res_table.set_attributes(first.attribs)
+
+        first_rows = set([tuple(row) for row in first.rows])
+        second_rows =set([tuple(row) for row in second.rows])
+
+        final_rows = [list(row) for row in first_rows.difference(second_rows)]
+        # now we have final list of rows
+        for row in final_rows:
+            res_table.add_row(row)
+        
+        return res_table
+
 
 class QueryExecuter:
     def __init__(self):
         self.tables = {}
 
+    def addTable(self, table: MappedTable):
+        if not table.name or not table.name.strip():
+            raise ValueError("A table must have a non-empty name")
+        self.tables[table.name] = table
+
     def evaluate(self, node : BinaryNode | UnaryNode | AtomicNode):
         if isinstance(node, AtomicNode):
             return self.tables[node.val]
+        
+        first = self.evaluate(node.first)
+        second = self.evaluate(node.second) if isinstance(node, BinaryNode) else None
 
         if node.operator == "SELECT":
-            table = self.evaluate(node.first)
-            return TableUtils.select_from_table(table, node.condition)
+            return TableUtils.select_from_table(first, node.condition)
         
         elif node.operator == "PROJECT":
-            table = self.evaluate(node.first)
-            return TableUtils.project_table(table, node.condition)
+            return TableUtils.project_table(first, node.condition)
         
         elif node.operator == "JOIN":
-            first = self.evaluate(node.first)
-            second = self.evaluate(node.second)
             return TableUtils.join_tables(first, second, node.condition)
         
-        elif node.operator in {"UNION", "INTERSECT", "DIFFERENCE", "AGGREGATE"}:
+        elif node.operator == "UNION":
+            return TableUtils.union_tables(first, second)
+        
+        elif node.operator == "INTERSECT":
+            return TableUtils.intersect_tables(first, second)
+
+        elif node.operator == "DIFFERENCE":
+            return TableUtils.difference_table(first, second)
+        
+        elif node.operator in {"AGGREGATE"}:
             raise NotImplementedError(
                 f"{node.operator} is not implemented in TableUtils"
             )
@@ -148,9 +206,151 @@ class QueryExecuter:
 
 
 def main():
-    table = [["emp_id", "name", "age"],
-             [500, "Jogn Doe", 35],
-             [457, "Jane Smith", 24]]
-    print(TableUtils.project_table(table, ["emp_id", "name"]))
+    def make_table(name, attributes, rows):
+        table = MappedTable(name, None)
+        table.set_attributes(attributes)
+        for row in rows:
+            table.add_row(row)
+        return table
+
+    def check_result(test_name, result, expected_attributes, expected_rows):
+        assert result.attribs == expected_attributes, (
+            f"{test_name}: expected columns {expected_attributes}, got {result.attribs}"
+        )
+        actual = {tuple(row) for row in result.rows}
+        expected = {tuple(row) for row in expected_rows}
+        assert actual == expected, (
+            f"{test_name}: expected rows {expected}, got {actual}"
+        )
+        print(f"PASS: {test_name} ({len(result.rows)} rows)")
+
+    employees = make_table(
+        "Employees",
+        ["employee_id", "name", "dept_id", "salary"],
+        [
+            [101, "Ava Chen", 10, 128000],
+            [102, "Noah Patel", 20, 96000],
+            [103, "Mia Brooks", 10, 113000],
+            [104, "Liam Rivera", 30, 87000],
+            [105, "Zoe Kim", 20, 104000],
+            [106, "Ethan Shah", 30, 99000],
+            [107, "Ivy Nguyen", 10, 142000],
+            [108, "Leo Martin", 20, 76000],
+        ],
+    )
+    departments = make_table(
+        "Departments",
+        ["dept_id", "dept_name", "city"],
+        [
+            [10, "Engineering", "Seattle"],
+            [20, "Research", "Boston"],
+            [30, "Operations", "Austin"],
+        ],
+    )
+    archived_employees = make_table(
+        "ArchivedEmployees",
+        ["employee_id", "name", "dept_id", "salary"],
+        [
+            [101, "Ava Chen", 10, 128000],
+            [104, "Liam Rivera", 30, 87000],
+            [108, "Leo Martin", 20, 76000],
+            [109, "Grace Park", 10, 91000],
+        ],
+    )
+
+    evaluator = QueryExecuter()
+    for table in (employees, departments, archived_employees):
+        evaluator.addTable(table)
+
+    # One case for each implemented relational-algebra operation.
+    projected = evaluator.evaluate(
+        UnaryNode("PROJECT", AtomicNode("Employees"), ["name", "salary"])
+    )
+    check_result(
+        "PROJECT",
+        projected,
+        ["name", "salary"],
+        [[row[1], row[3]] for row in employees.rows],
+    )
+
+    selected = evaluator.evaluate(
+        UnaryNode("SELECT", AtomicNode("Employees"), ConditionParser.parse("salary >= 100000"))
+    )
+    check_result(
+        "SELECT",
+        selected,
+        employees.attribs,
+        [row for row in employees.rows if row[3] >= 100000],
+    )
+
+    joined = evaluator.evaluate(
+        BinaryNode("JOIN", AtomicNode("Employees"), AtomicNode("Departments"),
+                   ConditionParser.parse("Employees.dept_id == Departments.dept_id"))
+    )
+    check_result(
+        "JOIN",
+        joined,
+        employees.attribs + departments.attribs,
+        [employee + department for employee in employees.rows
+         for department in departments.rows if employee[2] == department[0]],
+    )
+
+    unioned = evaluator.evaluate(
+        BinaryNode("UNION", AtomicNode("Employees"), AtomicNode("ArchivedEmployees"))
+    )
+    check_result(
+        "UNION",
+        unioned,
+        employees.attribs,
+        employees.rows + archived_employees.rows,
+    )
+
+    intersected = evaluator.evaluate(
+        BinaryNode("INTERSECT", AtomicNode("Employees"), AtomicNode("ArchivedEmployees"))
+    )
+    check_result(
+        "INTERSECT",
+        intersected,
+        employees.attribs,
+        [row for row in employees.rows if row in archived_employees.rows],
+    )
+
+    differenced = evaluator.evaluate(
+        BinaryNode("DIFFERENCE", AtomicNode("Employees"), AtomicNode("ArchivedEmployees"))
+    )
+    check_result(
+        "DIFFERENCE",
+        differenced,
+        employees.attribs,
+        [row for row in employees.rows if row not in archived_employees.rows],
+    )
+
+    # A chained JOIN -> SELECT -> PROJECT case verifies recursive evaluation.
+    multi_result = evaluator.evaluate(
+        UnaryNode(
+            "PROJECT",
+            UnaryNode(
+                "SELECT",
+                BinaryNode(
+                    "JOIN",
+                    AtomicNode("Employees"),
+                    AtomicNode("Departments"),
+                    ConditionParser.parse("Employees.dept_id == Departments.dept_id"),
+                ),
+                ConditionParser.parse("salary >= 100000"),
+            ),
+            ["name", "dept_name"],
+        )
+    )
+    check_result(
+        "JOIN -> SELECT -> PROJECT",
+        multi_result,
+        ["name", "dept_name"],
+        [[employee[1], department[1]]
+         for employee in employees.rows
+         for department in departments.rows
+         if employee[2] == department[0] and employee[3] >= 100000],
+    )
+
 if __name__ == '__main__':
     main()
