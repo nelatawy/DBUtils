@@ -237,19 +237,13 @@ class QueryExecuter:
         second = self.evaluate(node.second) if isinstance(node, BinaryNode) else None
 
         if node.operator == "SELECT":
-            return TableUtils.select_from_table(first, node.condition)
+            return TableUtils.select_from_table(first, node.extra)
         
-        elif node.operator.startswith("PROJECT"):
-            if "{" not in node.operator or not node.operator.endswith("}"):
-                raise ValueError("PROJECT requires attributes in braces")
-            proj_attribs = [
-                attribute.strip()
-                for attribute in node.operator.split("{", 1)[1][:-1].split(",")
-            ]
-            return TableUtils.project_table(first, proj_attribs)
-        
+        elif node.operator == "PROJECT":
+            return TableUtils.project_table(first, node.extra)
+    
         elif node.operator == "JOIN":
-            return TableUtils.join_tables(first, second, node.condition)
+            return TableUtils.join_tables(first, second, node.extra)
         
         elif node.operator == "UNION":
             return TableUtils.union_tables(first, second)
@@ -260,11 +254,8 @@ class QueryExecuter:
         elif node.operator == "DIFFERENCE":
             return TableUtils.difference_table(first, second)
         
-        elif node.operator.startswith("AGGREGATE"):
-            if "{" not in node.operator or not node.operator.endswith("}"):
-                raise ValueError("AGGREGATE requires expressions in braces")
-            aggregations = node.operator.split("{", 1)[1][:-1].split(",")
-            return TableUtils.aggregate_table(first, aggregations)
+        elif node.operator == "AGGREGATE":
+            return TableUtils.aggregate_table(first, node.extra)
 
         raise ValueError(f"Unsupported query operator: {node.operator}")
 
@@ -406,7 +397,7 @@ def main():
     # A chained JOIN -> SELECT -> PROJECT case verifies recursive evaluation.
     multi_result = evaluator.evaluate(
         UnaryNode(
-            "PROJECT{name,dept_name}",
+            "PROJECT",
             UnaryNode(
                 "SELECT",
                 BinaryNode(
@@ -417,6 +408,7 @@ def main():
                 ),
                 ConditionParser.parse("salary >= 100000"),
             ),
+            ["name", "dept_name"],
         )
     )
     check_result(
