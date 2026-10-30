@@ -25,7 +25,7 @@ class QueryParser:
     }
 
     def __get_wout_options(op : str):
-        return op.split("[")[0]
+        return op.split("[")[0].split("{")[0]
 
     def __get_type(op : str):
         op = QueryParser.__get_wout_options(op)
@@ -50,18 +50,23 @@ class QueryParser:
         for tok in query.split(" "):
             base_itr = 0
             scan_itr = 0
+            ignore = False
             while scan_itr < len(tok):
+                if tok[scan_itr] == "{" or tok[scan_itr] == "[":
+                    ignore = True
+                elif tok[scan_itr] == "}" or tok[scan_itr] == "]":
+                    ignore = False
+
+                if ignore:
+                    scan_itr += 1
+                    continue
+
                 if tok[scan_itr] == '(' or tok[scan_itr] == ')':
                     if scan_itr - base_itr > 0:
                         tokens.append(tok[base_itr:scan_itr])
 
                     tokens.append(tok[scan_itr])
                     base_itr = scan_itr + 1
-                
-                if tok[scan_itr] == ']':
-                    # end of params for operator
-                    tokens.append(tok[base_itr:scan_itr + 1])
-                    base_itr = scan_itr + 1   
 
                 scan_itr += 1
             
@@ -155,7 +160,7 @@ def print_ast(node, indent: str = "", is_last: bool = True) -> None:
     
     # 1. Determine Node Identity and Content
     if isinstance(node, AtomicNode):
-        print(f"{indent}{marker}AtomicNode: '{node.name}'")
+        print(f"{indent}{marker}AtomicNode: '{node.val}'")
         return  # Leaf node, no children to crawl
         
     elif isinstance(node, UnaryNode):

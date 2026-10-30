@@ -163,6 +163,63 @@ class TableUtils:
         return res_table
 
 
+    def __get_aggr_func(aggr : str):
+        return aggr.split("(", 1)[0].strip().upper()
+    
+    def __get_aggr_attr(aggr : str):
+        if "(" not in aggr or not aggr.endswith(")"):
+            raise ValueError(f"Invalid aggregation expression: {aggr}")
+        return aggr.split("(", 1)[1][:-1].strip()
+
+    @staticmethod
+    def aggregate_table(table : MappedTable, aggregations : list[str]) -> MappedTable:
+        # Aggregations are expected in the form [MAX(salary),MIN(salary),AVG(salary)].
+        res_table = MappedTable("", None)
+        attrib_set = set(table.attribs)
+
+        for aggr in aggregations:
+            attr = TableUtils.__get_aggr_attr(aggr)
+            if not attr or attr not in attrib_set:
+                raise ValueError("can't aggregate a non existing attribute")
+            
+        res_table.set_attributes(aggregations)
+        aggr_row = []
+
+        for aggr in aggregations:
+            aggr_attr = TableUtils.__get_aggr_attr(aggr)
+            aggr_func = TableUtils.__get_aggr_func(aggr)
+
+            attr_idx = table.attribs.index(aggr_attr)
+            aggr_res = None if aggr_func != "AVG" else 0
+            
+
+            for row in table.rows:
+                val = row[attr_idx]
+                if aggr_func == "AVG":
+                    aggr_res += val
+
+                elif aggr_func == "MAX":
+                    if not aggr_res:
+                        aggr_res = val
+                    else:
+                        aggr_res = max(aggr_res, val)
+
+                elif aggr_func == "MIN":
+                    if not aggr_res:
+                        aggr_res = val
+                    else:
+                        aggr_res = min(aggr_res, val)
+
+                else:
+                    raise ValueError(f"Aggregation of type {aggr_func} is not allowed")
+
+            if aggr_func == "AVG" and len(table.rows):
+                aggr_res /= len(table.rows)
+            aggr_row.append(aggr_res)
+
+        res_table.add_row(aggr_row)
+        return res_table
+
 class QueryExecuter:
     def __init__(self):
         self.tables = {}
@@ -182,8 +239,14 @@ class QueryExecuter:
         if node.operator == "SELECT":
             return TableUtils.select_from_table(first, node.condition)
         
-        elif node.operator == "PROJECT":
-            return TableUtils.project_table(first, node.condition)
+        elif node.operator.startswith("PROJECT"):
+            if "{" not in node.operator or not node.operator.endswith("}"):
+                raise ValueError("PROJECT requires attributes in braces")
+            proj_attribs = [
+                attribute.strip()
+                for attribute in node.operator.split("{", 1)[1][:-1].split(",")
+            ]
+            return TableUtils.project_table(first, proj_attribs)
         
         elif node.operator == "JOIN":
             return TableUtils.join_tables(first, second, node.condition)
@@ -197,10 +260,11 @@ class QueryExecuter:
         elif node.operator == "DIFFERENCE":
             return TableUtils.difference_table(first, second)
         
-        elif node.operator in {"AGGREGATE"}:
-            raise NotImplementedError(
-                f"{node.operator} is not implemented in TableUtils"
-            )
+        elif node.operator.startswith("AGGREGATE"):
+            if "{" not in node.operator or not node.operator.endswith("}"):
+                raise ValueError("AGGREGATE requires expressions in braces")
+            aggregations = node.operator.split("{", 1)[1][:-1].split(",")
+            return TableUtils.aggregate_table(first, aggregations)
 
         raise ValueError(f"Unsupported query operator: {node.operator}")
 
@@ -264,7 +328,7 @@ def main():
 
     # One case for each implemented relational-algebra operation.
     projected = evaluator.evaluate(
-        UnaryNode("PROJECT", AtomicNode("Employees"), ["name", "salary"])
+        QueryParser.parse("PROJECT{name,salary} Employees")
     )
     check_result(
         "PROJECT",
@@ -325,10 +389,24 @@ def main():
         [row for row in employees.rows if row not in archived_employees.rows],
     )
 
+    # Aggregation syntax is parsed from AGGREGATE{FUNC(attribute),...} directly.
+    aggregated = evaluator.evaluate(
+        QueryParser.parse(
+            "AGGREGATE{MAX(salary),MIN(salary),AVG(salary)} Employees"
+        )
+    )
+    salaries = [row[3] for row in employees.rows]
+    check_result(
+        "AGGREGATE MAX/MIN/AVG",
+        aggregated,
+        ["MAX(salary)", "MIN(salary)", "AVG(salary)"],
+        [[max(salaries), min(salaries), sum(salaries) / len(salaries)]],
+    )
+
     # A chained JOIN -> SELECT -> PROJECT case verifies recursive evaluation.
     multi_result = evaluator.evaluate(
         UnaryNode(
-            "PROJECT",
+            "PROJECT{name,dept_name}",
             UnaryNode(
                 "SELECT",
                 BinaryNode(
@@ -339,7 +417,6 @@ def main():
                 ),
                 ConditionParser.parse("salary >= 100000"),
             ),
-            ["name", "dept_name"],
         )
     )
     check_result(
