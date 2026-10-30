@@ -1,0 +1,15 @@
+digraph {
+	node [fontname="Helvetica,Arial,sans-serif" fontsize=10 shape=plain]
+	edge [fontname="Helvetica,Arial,sans-serif" fontsize=10]
+	nodesep=0.9 rankdir=TB ranksep=1.2 splines=polyline
+	Employee [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6"><TR><TD COLSPAN="2" BGCOLOR="#dddddd"><B>Employee</B></TD></TR><TR><TD PORT="ID"><U>ID</U></TD><TD PORT="department_ID">department_ID</TD></TR></TABLE>>]
+	Department [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6"><TR><TD COLSPAN="1" BGCOLOR="#dddddd"><B>Department</B></TD></TR><TR><TD PORT="ID"><U>ID</U></TD></TR></TABLE>>]
+	Project [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6"><TR><TD COLSPAN="2" BGCOLOR="#dddddd"><B>Project</B></TD></TR><TR><TD PORT="ID"><U>ID</U></TD><TD PORT="department_ID">department_ID</TD></TR></TABLE>>]
+	Office [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6"><TR><TD COLSPAN="2" BGCOLOR="#dddddd"><B>Office</B></TD></TR><TR><TD PORT="ID"><U>ID</U></TD><TD PORT="employee_ID">employee_ID</TD></TR></TABLE>>]
+	Works_On [label=<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6"><TR><TD COLSPAN="2" BGCOLOR="#dddddd"><B>Works_On</B></TD></TR><TR><TD PORT="employee_ID"><U>employee_ID</U></TD><TD PORT="project_ID"><U>project_ID</U></TD></TR></TABLE>>]
+	Employee:department_ID:s -> Department:ID:n
+	Project:department_ID:s -> Department:ID:n
+	Works_On:employee_ID:s -> Employee:ID:n
+	Works_On:project_ID:s -> Project:ID:n
+	Office:employee_ID:s -> Employee:ID:n
+}

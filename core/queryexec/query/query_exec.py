@@ -14,7 +14,7 @@ class MappedTable:
 
         if not table_rows:
             return
-        for i in range(1, len(table_rows.root)):
+        for i in range(len(table_rows.root)):
             row = table_rows.root[i]
             self.rows.append(list(row.root.values()))
 
@@ -35,14 +35,22 @@ class TableUtils:
         res_table = MappedTable("", None)
         res_table.set_attributes(list(filter(lambda x : x in proj_attr, table.attribs)))
 
+        seen_rows = set()
         for i, attribute in enumerate(table.attribs):
             if attribute in proj_attr:
                 selected_indices.add(i)
         
         for row in table.rows:
-            res_table.add_row(
-                [value for index, value in enumerate(row) if index in selected_indices]
-            )
+            new_row = []
+            for index, value in enumerate(row):
+                if index in selected_indices:
+                    new_row.append(value)
+            
+            row_tuple = tuple(new_row)
+            if row_tuple not in seen_rows:
+                seen_rows.add(row_tuple)
+                res_table.add_row(new_row)
+
         return res_table
             
     @staticmethod
