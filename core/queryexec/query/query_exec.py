@@ -4,8 +4,7 @@ from core.queryexec.conditions.condition_parser import ConditionParser
 from core.queryexec.state_models import DatabaseState, TableState
 from core.queryexec.ast_models import *
 
-# maps from DatabaseState to python matrices
-# first row is attribute names and the rest are values
+
 
 class MappedTable:
     def __init__(self, table_name : str, table_rows : TableState):
@@ -83,13 +82,13 @@ class TableUtils:
             if has_overlapping_attribs and first.name == second.name:
                 raise ValueError("Can't perform a theta join on 2 anonymous tables with overlapping attrib names")
             
-            # by the time we pass we are sure that either there's no overalpping attributes or one of them is named
+            # At this point, columns do not overlap or table names disambiguate them.
             for row1 in first.rows:
                 values = dict()
                 for j in range(len(row1)):
                     
                     if not has_overlapping_attribs or (not first.name or not first.name.strip()):
-                        # if this is the anonymous table we should set the value by column name directly
+                        # For anonymous tables, use column names directly.
                         values[first.attribs[j]] = row1[j]
 
                     if first.name and first.name.strip():
@@ -100,7 +99,7 @@ class TableUtils:
                     for j in range(len(row2)):
 
                         if not has_overlapping_attribs or (not second.name or not second.name.strip()):
-                            # if this is the anonymous table we should set the value by column name directly
+                            # For anonymous tables, use column names directly.
                             values[second.attribs[j]] = row2[j]
 
                         if second.name and second.name.strip():
@@ -138,7 +137,7 @@ class TableUtils:
         second_rows =set([tuple(row) for row in second.rows])
 
         final_rows = [list(row) for row in first_rows.intersection(second_rows)]
-        # now we have final list of rows
+        # Add the resulting rows.
         for row in final_rows:
             res_table.add_row(row)
         
@@ -156,7 +155,7 @@ class TableUtils:
         second_rows =set([tuple(row) for row in second.rows])
 
         final_rows = [list(row) for row in first_rows.difference(second_rows)]
-        # now we have final list of rows
+        # Add the resulting rows.
         for row in final_rows:
             res_table.add_row(row)
         
@@ -173,7 +172,7 @@ class TableUtils:
 
     @staticmethod
     def aggregate_table(table : MappedTable, aggregations : list[str]) -> MappedTable:
-        # Aggregations are expected in the form [MAX(salary),MIN(salary),AVG(salary)].
+        # Expected syntax: [MAX(salary), MIN(salary), AVG(salary)].
         res_table = MappedTable("", None)
         attrib_set = set(table.attribs)
 
@@ -321,7 +320,7 @@ def main():
     for table in (employees, departments, archived_employees):
         evaluator.addTable(table)
 
-    # One case for each implemented relational-algebra operation.
+    # Test each implemented relational-algebra operation.
     projected = evaluator.evaluate(
         QueryParser.parse("PROJECT{name,salary} Employees")
     )
@@ -384,7 +383,7 @@ def main():
         [row for row in employees.rows if row not in archived_employees.rows],
     )
 
-    # Aggregation syntax is parsed from AGGREGATE{FUNC(attribute),...} directly.
+    # Parse aggregations directly from AGGREGATE{FUNC(attribute),...}.
     aggregated = evaluator.evaluate(
         QueryParser.parse(
             "AGGREGATE{MAX(salary),MIN(salary),AVG(salary)} Employees"
@@ -398,7 +397,7 @@ def main():
         [[max(salaries), min(salaries), sum(salaries) / len(salaries)]],
     )
 
-    # A chained JOIN -> SELECT -> PROJECT case verifies recursive evaluation.
+    # Verify recursive evaluation with JOIN -> SELECT -> PROJECT.
     multi_result = evaluator.evaluate(
         UnaryNode(
             "PROJECT",
@@ -425,8 +424,8 @@ def main():
          if employee[2] == department[0] and employee[3] >= 100000],
     )
 
-    # Repeat the same operation coverage from query strings to exercise parsing
-    # and evaluation together, rather than constructing AST nodes by hand.
+    # Repeat the operation tests from query strings to cover parsing and evaluation,
+    # rather than building AST nodes by hand.
     check_query(
         "QUERY PROJECT",
         "PROJECT{name,salary} Employees",

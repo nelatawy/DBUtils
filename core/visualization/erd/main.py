@@ -1,6 +1,6 @@
 import os
 from core.visualization.schema_models import *
-from visualization.erd.visualization import ERDVisualizer
+from core.visualization.erd.visualization import ERDVisualizer
 from google import genai
 from google.genai import types
 import graphviz

@@ -1,4 +1,4 @@
-# we will use climbing precedence
+# Use precedence climbing.
 from enum import Enum
 from core.queryexec.ast_models import *
 from core.queryexec.conditions.condition_parser import ConditionParser
@@ -109,13 +109,13 @@ class QueryParser:
                 return UnaryNode(op, operand, extra)
             
             elif tok == "(":
-                # takes first paren, and swallows the last one and returns whats in between
+                # Parse and return the expression inside the parentheses.
                 consume_token()
                 inner = parse_expression(min_precedence=0)
                 consume_token()
                 return inner
             else:
-                # atomic
+                # Parse an atomic operand.
                 var = consume_token()
                 return AtomicNode(var)
 

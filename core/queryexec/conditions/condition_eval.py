@@ -13,7 +13,7 @@ class ConditionEvaluater:
         second = ""
         if isinstance(node.second.val,str):
             if node.second.val[0] == "\"" and node.second.val[-1] == "\"":
-                # literal
+                # Quoted string literal.
                 second = node.second.val[1:-1]
             else:
                 second = values[node.second.val]

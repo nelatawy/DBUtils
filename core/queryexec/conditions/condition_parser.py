@@ -11,14 +11,14 @@ class ConditionParser:
         
     @staticmethod
     def __tokenize(condition : str):
-                literal_split = condition.split("\"") #get literals first
+                literal_split = condition.split("\"") # Split around quoted literals first.
                 parts = []
-                # parts with indices 0, 2, 4 etc map to text between literals
+                # Even indices contain text outside quoted literals.
                 for i in range(len(literal_split)):
                     if not len(literal_split[i]):
                         continue
                     if i % 2 == 1:
-                        parts.append("\"" + literal_split[i] + "\"") #add qoutations back
+                        parts.append("\"" + literal_split[i] + "\"") # Restore the quotation marks.
                     else:
                         parts.extend(filter(lambda x : len(x) > 0, literal_split[i].split(" ")))
                 return parts
@@ -27,9 +27,9 @@ class ConditionParser:
     def parse(condition : str):
         
         def parse_atomic(condition : str):
-            # binary conditions only [ ==, > , <, >= , <= , != ]
+            # Supported binary operators: ==, !=, >, >=, <, <=.
             parts = ConditionParser.__tokenize(condition)
-            if len(parts) == 1: #used for natural joins
+            if len(parts) == 1: # Used for natural joins.
                 return AtomicNode(parts[0])
             
             left = AtomicNode(parts[0])
