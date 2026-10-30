@@ -29,6 +29,9 @@ class ConditionParser:
         def parse_atomic(condition : str):
             # binary conditions only [ ==, > , <, >= , <= , != ]
             parts = ConditionParser.__tokenize(condition)
+            if len(parts) == 1: #used for natural joins
+                return AtomicNode(parts[0])
+            
             left = AtomicNode(parts[0])
             right = AtomicNode(float(parts[2]) if ConditionParser.is_number(parts[2]) else parts[2])
             return BinaryNode(parts[1], left, right)

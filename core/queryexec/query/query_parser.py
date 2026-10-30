@@ -1,6 +1,7 @@
 # we will use climbing precedence
 from enum import Enum
 from core.queryexec.ast_models import *
+from core.queryexec.conditions.condition_parser import ConditionParser
 class OpType(Enum):
     UNARY=1
     BINARY=2
@@ -75,7 +76,7 @@ class QueryParser:
         tokens = QueryParser.__tokenize(query)
         itr = 0
 
-        def consume_token():
+        def consume_token() -> str:
             nonlocal itr
             itr += 1
             return tokens[itr - 1]
@@ -92,7 +93,14 @@ class QueryParser:
                 # unary operator consume operator and operand
                 op = consume_token()
                 operand = parse_primary()
-                return UnaryNode(op, operand)
+                
+                condition = None
+                try:
+                    condition = ConditionParser.parse(op.split("[")[1][:-1])
+                except:
+                    pass
+
+                return UnaryNode(op, operand, condition)
             
             elif tok == "(":
                 # takes first paren, and swallows the last one and returns whats in between
@@ -120,7 +128,14 @@ class QueryParser:
 
                 next_prec = op_prec if op_assoc == Associativity.RTL else op_prec + 1
                 right = parse_expression(min_precedence= next_prec)
-                left = BinaryNode(op, left, right)
+                
+                condition = None
+                try:
+                    condition = ConditionParser.parse(op.split("[")[1][:-1])
+                except:
+                    pass
+
+                left = BinaryNode(op.split("[")[0], left, right, condition)
             return left
 
 
