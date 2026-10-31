@@ -32,7 +32,7 @@ class TableUtils:
         selected_indices = set()
         proj_attr = set(proj_attr)
 
-        res_table = MappedTable("", None)
+        res_table = MappedTable(table.name, None)
         res_table.set_attributes(list(filter(lambda x : x in proj_attr, table.attribs)))
 
         seen_rows = set()
@@ -55,7 +55,7 @@ class TableUtils:
             
     @staticmethod
     def select_from_table(table : MappedTable, cond_tree) -> MappedTable:
-        res_table = MappedTable("", None)
+        res_table = MappedTable(table.name, None)
         res_table.set_attributes(table.attribs)
 
         for row in table.rows:
