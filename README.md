@@ -149,7 +149,8 @@ DBUtils/
 │       ├── state_models.py             # Pydantic models for incoming table data
 │       ├── ast_models.py               # AtomicNode / UnaryNode / BinaryNode + print_ast
 │       ├── query/
-│       │   ├── query_exec.py           # MappedTable, TableUtils, QueryExecuter (+ self-tests)
+│       │   ├── query_exec.py           # MappedTable, TableUtils, QueryExecuter
+│       │   ├── main.py                 # Runnable query examples and smoke tests
 │       │   └── query_parser.py         # QueryParser: query string → AST (precedence climbing)
 │       └── conditions/
 │           ├── condition_parser.py     # ConditionParser: condition string → AST
@@ -588,10 +589,10 @@ RENAME{emp_id,emp_name,emp_dept,pay} Employees JOIN[emp_dept == dept_id] Departm
 
 ### Running the self-tests
 
-`core/queryexec/query/query_exec.py` ends with `main()`, which builds three small tables (`Employees`, `Departments`, `ArchivedEmployees`) and checks the result of every operator. Every check is a **query string**, so parsing and execution are always exercised together. Results are compared as multisets of rows, so the order of rows does not matter. The checks cover `PROJECT`, `SELECT`, `RENAME` (on two tables), a theta `JOIN` between two renamed tables, `UNION`, `INTERSECT`, `DIFFERENCE`, `AGGREGATE`, and a final query that renames three tables, joins them, then applies `SELECT` and `PROJECT`.
+`core/queryexec/query/main.py` builds three small tables (`Employees`, `Departments`, `ArchivedEmployees`) and checks the result of every operator. Every check is a **query string**, so parsing and execution are always exercised together. Results are compared as multisets of rows, so the order of rows does not matter. The checks cover `PROJECT`, `SELECT`, `RENAME` (on two tables), a theta `JOIN` between two renamed tables, `UNION`, `INTERSECT`, `DIFFERENCE`, `AGGREGATE`, and a final query that renames three tables, joins them, then applies `SELECT` and `PROJECT`.
 
 ```bash
-python -m core.queryexec.query.query_exec
+python -m core.queryexec.query.main
 ```
 
 Each check prints `PASS: <name> (<n> rows)` and an assertion error identifies the failing operator. The parsers also have small demos you can run the same way (`python -m core.queryexec.query.query_parser`, `python -m core.queryexec.conditions.condition_eval`).

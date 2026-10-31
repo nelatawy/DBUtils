@@ -1,5 +1,5 @@
 from core.queryexec.conditions.condition_eval import ConditionEvaluater
-from core.queryexec.state_models import DatabaseState, TableState
+from core.queryexec.state_models import TableState
 from core.queryexec.ast_models import *
 
 
