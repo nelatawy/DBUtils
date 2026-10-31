@@ -72,47 +72,51 @@ class TableUtils:
     @staticmethod
     def join_tables(first : MappedTable, second : MappedTable, cond_tree) -> MappedTable:
         res_table = MappedTable("",None)
-        res_table.set_attributes(first.attribs + second.attribs)
-        has_overlapping_attribs = (len(set(first.attribs).intersection(second.attribs)) != 0)
+        overlapping_attribs = (len(set(first.attribs).intersection(second.attribs)))
         
         natural_join = (isinstance(cond_tree, AtomicNode))
         if natural_join:
             join_attrib = cond_tree.val
             if join_attrib not in first.attribs or join_attrib not in second.attribs:
                 raise ValueError("Can't perform natural JOIN if tables don't have the JOIN attribute")
+
+            if overlapping_attribs > 1:
+                raise ValueError("Can't perform a JOIN on 2 tables having overlapping attributes other than the JOIN attribute")
+            
             join_attrib_indices = first.attribs.index(join_attrib), second.attribs.index(join_attrib)
+            
+            first_wout_join_attr = first.attribs[:]
+            first_wout_join_attr.remove(join_attrib)
+
+            second_wout_join_attr = second.attribs[:]
+            second_wout_join_attr.remove(join_attrib)
+
+            res_table.set_attributes(first_wout_join_attr + [join_attrib] + second_wout_join_attr)
             
             for row1 in first.rows:
                 for row2 in second.rows:
                     if row1[join_attrib_indices[0]] == row2[join_attrib_indices[1]]:
-                        res_table.add_row(row1 + row2)
+                        first_part = row1[:]
+                        first_part.remove(join_attrib)
+
+                        second_part = row2[:]
+                        second_part.remove(join_attrib)
+
+                        res_table.add_row(first_part + [join_attrib] + second_part)
         else:
-            if has_overlapping_attribs and first.name == second.name:
-                raise ValueError("Can't perform a theta join on 2 anonymous tables with overlapping attrib names")
-            
-            # At this point, columns do not overlap or table names disambiguate them.
+            if overlapping_attribs:
+                raise ValueError("Can't perform a theta join on 2 tables with overlapping attrib names perform a\
+                                  RENAME first or use a natural join if it's the only overlapping attribute")
+            res_table.set_attributes(first.attribs + second.attribs)
+            # At this point, columns do not overlap
             for row1 in first.rows:
                 values = dict()
                 for j in range(len(row1)):
-                    
-                    if not has_overlapping_attribs or (not first.name or not first.name.strip()):
-                        # For anonymous tables, use column names directly.
-                        values[first.attribs[j]] = row1[j]
-
-                    if first.name and first.name.strip():
-                        # to support both table.attrib and just attrib
-                        values[f"{first.name}.{first.attribs[j]}"] = row1[j]
+                    values[first.attribs[j]] = row1[j]
 
                 for row2 in second.rows:
                     for j in range(len(row2)):
-
-                        if not has_overlapping_attribs or (not second.name or not second.name.strip()):
-                            # For anonymous tables, use column names directly.
-                            values[second.attribs[j]] = row2[j]
-
-                        if second.name and second.name.strip():
-                            # to support both table.attrib and just attrib
-                            values[f"{second.name}.{second.attribs[j]}"] = row2[j]
+                        values[second.attribs[j]] = row2[j]
 
                     valid_row = ConditionEvaluater.evaluate(cond_tree, values)
                     if valid_row:
@@ -169,6 +173,16 @@ class TableUtils:
         
         return res_table
 
+    @staticmethod
+    def rename_attributes(table : MappedTable, new_names : list[str]):
+        if len(new_names) != len(table.attribs):
+            raise ValueError("Can't rename attributes if attribute length and new name list length don't match")
+
+        res_table = MappedTable(table.name, None)
+        for row in table.rows:
+            res_table.add_row(row)
+        res_table.set_attributes(new_names)
+        return res_table
 
     def __get_aggr_func(aggr : str):
         return aggr.split("(", 1)[0].strip().upper()
@@ -248,7 +262,10 @@ class QueryExecuter:
         
         elif node.operator == "PROJECT":
             return TableUtils.project_table(first, node.extra)
-    
+        
+        elif node.operator == "RENAME":
+            return TableUtils.rename_attributes(first, node.extra)
+        
         elif node.operator == "JOIN":
             return TableUtils.join_tables(first, second, node.extra)
         
@@ -263,6 +280,7 @@ class QueryExecuter:
         
         elif node.operator == "AGGREGATE":
             return TableUtils.aggregate_table(first, node.extra)
+            
 
         raise ValueError(f"Unsupported query operator: {node.operator}")
 
@@ -275,217 +293,147 @@ def main():
             table.add_row(row)
         return table
 
-    def check_result(test_name, result, expected_attributes, expected_rows):
-        assert result.attribs == expected_attributes, (
-            f"{test_name}: expected columns {expected_attributes}, got {result.attribs}"
-        )
-        actual = {tuple(row) for row in result.rows}
-        expected = {tuple(row) for row in expected_rows}
-        assert actual == expected, (
-            f"{test_name}: expected rows {expected}, got {actual}"
-        )
-        print(f"PASS: {test_name} ({len(result.rows)} rows)")
+    def row_counts(rows):
+        counts = {}
+        for row in rows:
+            key = tuple(row)
+            counts[key] = counts.get(key, 0) + 1
+        return counts
 
-    def check_query(test_name, query, expected_attributes, expected_rows):
+    def check_query(name, query, expected_attributes, expected_rows):
         result = evaluator.evaluate(QueryParser.parse(query))
-        check_result(test_name, result, expected_attributes, expected_rows)
+        assert result.attribs == expected_attributes, (
+            f"{name}\nQuery: {query}\n"
+            f"Expected columns: {expected_attributes}\nActual columns: {result.attribs}"
+        )
+        assert row_counts(result.rows) == row_counts(expected_rows), (
+            f"{name}\nQuery: {query}\n"
+            f"Expected rows: {expected_rows}\nActual rows: {result.rows}"
+        )
+        print(f"PASS: {name} ({len(result.rows)} rows)")
 
     employees = make_table(
         "Employees",
         ["employee_id", "name", "dept_id", "salary"],
         [
-            [101, "Ava Chen", 10, 128000],
-            [102, "Noah Patel", 20, 96000],
-            [103, "Mia Brooks", 10, 113000],
-            [104, "Liam Rivera", 30, 87000],
-            [105, "Zoe Kim", 20, 104000],
-            [106, "Ethan Shah", 30, 99000],
-            [107, "Ivy Nguyen", 10, 142000],
-            [108, "Leo Martin", 20, 76000],
+            [101, "Ada", 10, 120000],
+            [102, "Ben", 20, 90000],
+            [103, "Cy", 10, 80000],
+            [104, "Dia", 30, 70000],
         ],
     )
     departments = make_table(
         "Departments",
         ["dept_id", "dept_name", "city"],
-        [
-            [10, "Engineering", "Seattle"],
-            [20, "Research", "Boston"],
-            [30, "Operations", "Austin"],
-        ],
+        [[10, "Engineering", "Seattle"], [20, "Research", "Boston"], [30, "Operations", "Austin"]],
     )
     archived_employees = make_table(
         "ArchivedEmployees",
         ["employee_id", "name", "dept_id", "salary"],
-        [
-            [101, "Ava Chen", 10, 128000],
-            [104, "Liam Rivera", 30, 87000],
-            [108, "Leo Martin", 20, 76000],
-            [109, "Grace Park", 10, 91000],
-        ],
+        [[101, "Ada", 10, 120000], [104, "Dia", 30, 70000]],
     )
 
     evaluator = QueryExecuter()
     for table in (employees, departments, archived_employees):
         evaluator.addTable(table)
 
-    # Test each implemented relational-algebra operation.
-    projected = evaluator.evaluate(
-        QueryParser.parse("PROJECT{name,salary} Employees")
-    )
-    check_result(
-        "PROJECT",
-        projected,
-        ["name", "salary"],
-        [[row[1], row[3]] for row in employees.rows],
-    )
+    employee_names = ["employee_key", "employee_name", "employee_dept_id", "annual_salary"]
+    department_names = ["department_id", "department_name", "department_city"]
+    archive_names = ["archived_employee_key", "archived_name", "archived_dept_id", "archived_salary"]
 
-    selected = evaluator.evaluate(
-        UnaryNode("SELECT", AtomicNode("Employees"), ConditionParser.parse("salary >= 100000"))
-    )
-    check_result(
-        "SELECT",
-        selected,
-        employees.attribs,
-        [row for row in employees.rows if row[3] >= 100000],
-    )
-
-    joined = evaluator.evaluate(
-        BinaryNode("JOIN", AtomicNode("Employees"), AtomicNode("Departments"),
-                   ConditionParser.parse("Employees.dept_id == Departments.dept_id"))
-    )
-    check_result(
-        "JOIN",
-        joined,
-        employees.attribs + departments.attribs,
-        [employee + department for employee in employees.rows
-         for department in departments.rows if employee[2] == department[0]],
-    )
-
-    unioned = evaluator.evaluate(
-        BinaryNode("UNION", AtomicNode("Employees"), AtomicNode("ArchivedEmployees"))
-    )
-    check_result(
-        "UNION",
-        unioned,
-        employees.attribs,
-        employees.rows + archived_employees.rows,
-    )
-
-    intersected = evaluator.evaluate(
-        BinaryNode("INTERSECT", AtomicNode("Employees"), AtomicNode("ArchivedEmployees"))
-    )
-    check_result(
-        "INTERSECT",
-        intersected,
-        employees.attribs,
-        [row for row in employees.rows if row in archived_employees.rows],
-    )
-
-    differenced = evaluator.evaluate(
-        BinaryNode("DIFFERENCE", AtomicNode("Employees"), AtomicNode("ArchivedEmployees"))
-    )
-    check_result(
-        "DIFFERENCE",
-        differenced,
-        employees.attribs,
-        [row for row in employees.rows if row not in archived_employees.rows],
-    )
-
-    # Parse aggregations directly from AGGREGATE{FUNC(attribute),...}.
-    aggregated = evaluator.evaluate(
-        QueryParser.parse(
-            "AGGREGATE{MAX(salary),MIN(salary),AVG(salary)} Employees"
-        )
-    )
-    salaries = [row[3] for row in employees.rows]
-    check_result(
-        "AGGREGATE MAX/MIN/AVG",
-        aggregated,
-        ["MAX(salary)", "MIN(salary)", "AVG(salary)"],
-        [[max(salaries), min(salaries), sum(salaries) / len(salaries)]],
-    )
-
-    # Verify recursive evaluation with JOIN -> SELECT -> PROJECT.
-    multi_result = evaluator.evaluate(
-        UnaryNode(
-            "PROJECT",
-            UnaryNode(
-                "SELECT",
-                BinaryNode(
-                    "JOIN",
-                    AtomicNode("Employees"),
-                    AtomicNode("Departments"),
-                    ConditionParser.parse("Employees.dept_id == Departments.dept_id"),
-                ),
-                ConditionParser.parse("salary >= 100000"),
-            ),
-            ["name", "dept_name"],
-        )
-    )
-    check_result(
-        "JOIN -> SELECT -> PROJECT",
-        multi_result,
-        ["name", "dept_name"],
-        [[employee[1], department[1]]
-         for employee in employees.rows
-         for department in departments.rows
-         if employee[2] == department[0] and employee[3] >= 100000],
-    )
-
-    # Repeat the operation tests from query strings to cover parsing and evaluation,
-    # rather than building AST nodes by hand.
+    # Each test is a query string: parsing and evaluation are always exercised together.
     check_query(
-        "QUERY PROJECT",
+        "PROJECT selects named columns",
         "PROJECT{name,salary} Employees",
         ["name", "salary"],
-        [[row[1], row[3]] for row in employees.rows],
+        [["Ada", 120000], ["Ben", 90000], ["Cy", 80000], ["Dia", 70000]],
     )
     check_query(
-        "QUERY SELECT",
-        "SELECT[salary >= 100000] Employees",
+        "SELECT filters rows",
+        "SELECT[salary >= 90000] Employees",
         employees.attribs,
-        [row for row in employees.rows if row[3] >= 100000],
+        [employees.rows[0], employees.rows[1]],
     )
     check_query(
-        "QUERY JOIN",
-        "Employees JOIN[Employees.dept_id == Departments.dept_id] Departments",
-        employees.attribs + departments.attribs,
-        [employee + department for employee in employees.rows
-         for department in departments.rows if employee[2] == department[0]],
+        "RENAME changes every column name",
+        f"RENAME{{{','.join(employee_names)}}} Employees",
+        employee_names,
+        employees.rows,
     )
     check_query(
-        "QUERY UNION",
+        "RENAME works on a second table",
+        f"RENAME{{{','.join(department_names)}}} Departments",
+        department_names,
+        departments.rows,
+    )
+
+    employee_department_join = (
+        f"RENAME{{{','.join(employee_names)}}} Employees "
+        "JOIN[employee_dept_id == department_id] "
+        f"RENAME{{{','.join(department_names)}}} Departments"
+    )
+    expected_join_rows = [
+        employee + department
+        for employee in employees.rows
+        for department in departments.rows
+        if employee[2] == department[0]
+    ]
+    check_query(
+        "JOIN uses renamed non-overlapping columns",
+        employee_department_join,
+        employee_names + department_names,
+        expected_join_rows,
+    )
+
+    check_query(
+        "UNION combines compatible tables",
         "Employees UNION ArchivedEmployees",
         employees.attribs,
         employees.rows + archived_employees.rows,
     )
     check_query(
-        "QUERY INTERSECT",
+        "INTERSECT returns shared rows",
         "Employees INTERSECT ArchivedEmployees",
         employees.attribs,
         [row for row in employees.rows if row in archived_employees.rows],
     )
     check_query(
-        "QUERY DIFFERENCE",
+        "DIFFERENCE returns unshared rows",
         "Employees DIFFERENCE ArchivedEmployees",
         employees.attribs,
         [row for row in employees.rows if row not in archived_employees.rows],
     )
     check_query(
-        "QUERY AGGREGATE",
+        "AGGREGATE calculates multiple values",
         "AGGREGATE{MAX(salary),MIN(salary),AVG(salary)} Employees",
         ["MAX(salary)", "MIN(salary)", "AVG(salary)"],
-        [[max(salaries), min(salaries), sum(salaries) / len(salaries)]],
+        [[120000, 70000, 90000]],
     )
+
+    # Three relations, three inline renames, two joins, then filter and project.
+    three_table_query = (
+        f"PROJECT{{employee_name,department_name,archived_name}} "
+        "SELECT[annual_salary >= 70000] "
+        f"((RENAME{{{','.join(employee_names)}}} Employees "
+        "JOIN[employee_dept_id == department_id] "
+        f"RENAME{{{','.join(department_names)}}} Departments) "
+        "JOIN[employee_key == archived_employee_key] "
+        f"RENAME{{{','.join(archive_names)}}} ArchivedEmployees)"
+    )
+    expected_three_table_rows = [
+        [employee[1], department[1], archived[1]]
+        for employee in employees.rows
+        for department in departments.rows
+        for archived in archived_employees.rows
+        if employee[2] == department[0]
+        and employee[0] == archived[0]
+        and employee[3] >= 70000
+    ]
     check_query(
-        "QUERY JOIN -> SELECT -> PROJECT",
-        "PROJECT{name,dept_name} SELECT[salary >= 100000] "
-        "(Employees JOIN[Employees.dept_id == Departments.dept_id] Departments)",
-        ["name", "dept_name"],
-        [[employee[1], department[1]]
-         for employee in employees.rows
-         for department in departments.rows
-         if employee[2] == department[0] and employee[3] >= 100000],
+        "Nested RENAME + JOIN + SELECT + PROJECT",
+        three_table_query,
+        ["employee_name", "department_name", "archived_name"],
+        expected_three_table_rows,
     )
 
 if __name__ == '__main__':

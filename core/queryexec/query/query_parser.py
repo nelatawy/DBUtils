@@ -16,12 +16,13 @@ class QueryParser:
     
     operators : dict = {
         "SELECT"    : [OpType.UNARY , Associativity.RTL, 3],
+        "RENAME"    : [OpType.UNARY , Associativity.RTL, 3],
         "PROJECT"   : [OpType.UNARY , Associativity.RTL, 3],
+        "AGGREGATE" : [OpType.UNARY , Associativity.RTL, 3],
         "JOIN"      : [OpType.BINARY, Associativity.LTR, 2],
-        "UNION"     : [OpType.BINARY, Associativity.LTR, 1],
         "INTERSECT" : [OpType.BINARY, Associativity.LTR, 2],
-        "DIFFERENCE": [OpType.BINARY, Associativity.LTR, 1],
-        "AGGREGATE" : [OpType.UNARY , Associativity.RTL, 3]
+        "UNION"     : [OpType.BINARY, Associativity.LTR, 1],
+        "DIFFERENCE": [OpType.BINARY, Associativity.LTR, 1]
     }
 
     def __get_wout_options(op : str):
