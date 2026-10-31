@@ -96,13 +96,11 @@ class TableUtils:
             for row1 in first.rows:
                 for row2 in second.rows:
                     if row1[join_attrib_indices[0]] == row2[join_attrib_indices[1]]:
-                        first_part = row1[:]
-                        first_part.remove(join_attrib)
+                        first_part = row1[:join_attrib_indices[0]] + row1[join_attrib_indices[0] + 1:]
+                        second_part = row2[:join_attrib_indices[1]] + row2[join_attrib_indices[1] + 1:]
+                        join_attr_val = row1[join_attrib_indices[0]]
 
-                        second_part = row2[:]
-                        second_part.remove(join_attrib)
-
-                        res_table.add_row(first_part + [join_attrib] + second_part)
+                        res_table.add_row(first_part + [join_attr_val] + second_part)
         else:
             if overlapping_attribs:
                 raise ValueError("Can't perform a theta join on 2 tables with overlapping attrib names perform a\
