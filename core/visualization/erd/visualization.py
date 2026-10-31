@@ -50,17 +50,17 @@ class ERDVisualizer:
             - `TypeError`: if `attrib` is not an `Attribute` instance.
         """
         label = attrib.name
-        if attrib.isPrimaryKey:
+        if attrib.is_primary_key:
             label = f"<<U>{label}</U>>"
-        elif attrib.isPartialKey:
+        elif attrib.is_partial_key:
             label = "".join(c + "\u0332" for c in label)
 
         self.graph.node(
             name=node_name,
             label=label,
             shape="oval",
-            style="dashed" if attrib.isDerived else "solid",
-            peripheries="2" if attrib.isMultiValued else "1",
+            style="dashed" if attrib.is_derived else "solid",
+            peripheries="2" if attrib.is_multi_valued else "1",
         )
 
         if attrib.composite:
@@ -89,7 +89,7 @@ class ERDVisualizer:
             name=entity.name,
             label=entity.name,
             shape="box",
-            peripheries="2" if entity.isWeak else "1",
+            peripheries="2" if entity.is_weak else "1",
         )
 
         for attrib in entity.attributes:

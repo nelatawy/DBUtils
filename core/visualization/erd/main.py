@@ -15,11 +15,11 @@ You are a professional DataBase designer that should take the description of the
 and relationships both binary and n-ary are supported.
 Rules go as follows:
 1. Attribute is either a plain string (a simple attribute with no flags) or an object.
-2. Attribute object has a required name, optional boolean flags isPrimaryKey, isMultiValued, isDerived (default false), and an optional composite array.
+2. Attribute object has a required name, optional JSON flags isPrimaryKey, isMultiValued, isDerived (default false), and an optional composite array.
 3. composite is an array of attributes (strings or objects), and it nests to any depth, so flags work at any level.
 4. Relationship has a required name and a links array. Each entry in links must include: entity (matching a defined entity), cardinality (such as '1', 'N', or 'M'), and participation ('total' or 'partial').
 5. WEAK ENTITIES: If an entity depends on another entity for its identity, it is a WEAK ENTITY. 
-   - A weak entity MUST NOT have any attribute with 'isPrimaryKey' set to true. Its attributes are just normal strings/objects (acting as partial keys).
+    - A weak entity MUST NOT have any attribute with 'isPrimaryKey' set to true. Its attributes are just normal strings/objects (acting as partial keys).
    - The relationship connecting the strong entity to the weak entity is an IDENTIFYING RELATIONSHIP. You MUST include the weak entity's name inside that relationship's 'identifies' array.
 6. _comment is optional and ignored.
 """

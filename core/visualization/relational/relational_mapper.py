@@ -29,7 +29,7 @@ class Table:
         self.p_key = []
         self.attribs = []
 
-    def setPrimaryKey(self, p_k : list[str]):
+    def set_primary_key(self, p_k : list[str]):
         """Replace the table's primary-key list.
 
         Assumptions:
@@ -37,7 +37,7 @@ class Table:
         """
         self.p_key = p_k[:]
     
-    def addAttribs(self, attribs : list[str]):
+    def add_attribs(self, attribs : list[str]):
         """Append one or more visible table attributes.
 
         Assumptions:
@@ -68,7 +68,7 @@ class TableRegistry:
 
     Assumptions:
         - The schema is validated and all participating entities exist.
-        - Call `fromSchema()` once before rendering or inspection.
+        - Call `from_schema()` once before rendering or inspection.
 
     Raises:
         - `ValueError`: for invalid relationship kinds or unsupported cardinalities.
@@ -103,7 +103,7 @@ class TableRegistry:
 
         return f"{source_table}_{target_key}"
 
-    def __flattenAttrib(self, attrib : Attribute, added_pref : str = "") -> list[str]:
+    def __flatten_attrib(self, attrib : Attribute, added_pref : str = "") -> list[str]:
         """Flatten nested attributes into leaf names.
 
         Assumptions:
@@ -118,11 +118,11 @@ class TableRegistry:
             if (isinstance(part, str)):
                 res.append(prefix + attrib.name + "_" + part)
             else:
-                res.extend(self.__flattenAttrib(part, prefix + attrib.name))
+                res.extend(self.__flatten_attrib(part, prefix + attrib.name))
         return res
 
 
-    def addEntity(self, entity : Entity):
+    def add_entity(self, entity : Entity):
         """Create a base table for an entity.
 
         Assumptions:
@@ -137,25 +137,25 @@ class TableRegistry:
         basic_table : Table = Table(entity.name)
         p_key = None
         for attr in entity.attributes:
-            if attr.isDerived:
+            if attr.is_derived:
                 continue
 
-            if attr.isPrimaryKey or attr.isPartialKey:
+            if attr.is_primary_key or attr.is_partial_key:
                 p_key = attr
             
-            if attr.isMultiValued:
+            if attr.is_multi_valued:
                 continue
             else:
-                basic_table.addAttribs(self.__flattenAttrib(attr))
+                basic_table.add_attribs(self.__flatten_attrib(attr))
 
         if p_key:
-            basic_table.setPrimaryKey(self.__flattenAttrib(p_key))
+            basic_table.set_primary_key(self.__flatten_attrib(p_key))
         
         self.tables[entity.name] = basic_table
         
 
     # Add a multivalued attribute and link to its owning table.
-    def addMultiValued(self, table_name : str, attr: Attribute):
+    def add_multi_valued(self, table_name : str, attr: Attribute):
         """Create a table for a multivalued attribute, preserving its owner's key.
 
         Assumptions:
@@ -167,10 +167,10 @@ class TableRegistry:
         """
         new_table : Table = Table(table_name + "_" + attr.name + "s")
 
-        new_table.addAttribs(self.tables[table_name].p_key)
-        new_table.addAttribs(self.__flattenAttrib(attr))  # Add all parts of the multivalued attribute.
+        new_table.add_attribs(self.tables[table_name].p_key)
+        new_table.add_attribs(self.__flatten_attrib(attr))  # Add all parts of the multivalued attribute.
 
-        new_table.setPrimaryKey(new_table.attribs)
+        new_table.set_primary_key(new_table.attribs)
         # consider all attribs in the multivalued table as the pkey if no partial key was given
         self.tables[new_table.name] = new_table
         self.refs.append(Reference(new_table,
@@ -179,7 +179,7 @@ class TableRegistry:
                                    self.tables[table_name].p_key))
 
     # Participating tables must already be registered.
-    def addIdentifying(self, relation : Relationship):
+    def add_identifying(self, relation : Relationship):
         """Map an identifying relationship to its weak-entity table.
 
         Assumptions:
@@ -201,14 +201,14 @@ class TableRegistry:
         multivalued_attribs = []
 
         for attr in relation.attributes:
-            if attr.isDerived:
+            if attr.is_derived:
                 continue
 
-            if attr.isMultiValued:
+            if attr.is_multi_valued:
                 multivalued_attribs.append(attr)
                 continue  # Add multivalued attributes later.
 
-            relation_attribs.extend(self.__flattenAttrib(attr))
+            relation_attribs.extend(self.__flatten_attrib(attr))
 
         # Handle binary identifying relationships like 1:1 relationships.
         if len(relation.links) == 2:
@@ -221,32 +221,32 @@ class TableRegistry:
 
             if identified == first.entity:
                 added_attribs = [self._fk_name(tok, second) for tok in second_table.p_key]
-                first_table.addAttribs(added_attribs)
+                first_table.add_attribs(added_attribs)
 
                 self.refs.append(Reference(first_table, 
                                             added_attribs, 
                                             second_table, second_table.p_key))
-                first_table.addAttribs(relation_attribs)
+                first_table.add_attribs(relation_attribs)
                 for attr in multivalued_attribs:
-                    self.addMultiValued(first_table.name, attr)
+                    self.add_multi_valued(first_table.name, attr)
 
             else:
                 added_attribs = [self._fk_name(tok, first) for tok in first_table.p_key]
-                second_table.addAttribs(added_attribs)
+                second_table.add_attribs(added_attribs)
                 self.refs.append(Reference(second_table, 
                                             added_attribs,
                                             first_table, first_table.p_key))
-                second_table.addAttribs(relation_attribs)
+                second_table.add_attribs(relation_attribs)
                 for attr in multivalued_attribs:
-                    self.addMultiValued(second_table.name, attr)
+                    self.add_multi_valued(second_table.name, attr)
 
         # Handle n-ary identifying relationships.
         else:   
-            self.addNary(relation)
-            # `addNary()` handles the identifying link.
+            self.add_nary(relation)
+            # `add_nary()` handles the identifying link.
             
     # Add a binary 1:1 relationship.
-    def addOneToOne(self, relation : Relationship):
+    def add_one_to_one(self, relation : Relationship):
         """Map a binary 1:1 relationship.
 
         Assumptions:
@@ -258,7 +258,7 @@ class TableRegistry:
         """
         if len(relation.links) != 2 or \
             relation.links[0].cardinality != '1' or relation.links[1].cardinality != '1':
-            raise ValueError("addOneToOne only works on binary 1:1 relationships")
+            raise ValueError("add_one_to_one only works on binary 1:1 relationships")
         
         first = relation.links[0]
         second = relation.links[1]
@@ -269,32 +269,32 @@ class TableRegistry:
         relation_attribs = []
         multival_attribs = []
         for attr in relation.attributes:
-            if attr.isMultiValued:
+            if attr.is_multi_valued:
                 multival_attribs.append(attr)
                 continue
-            relation_attribs.extend(self.__flattenAttrib(attr))
+            relation_attribs.extend(self.__flatten_attrib(attr))
 
         if first.participation == 'total':
             added_attribs = [self._fk_name(tok, second) for tok in second_table.p_key]
-            first_table.addAttribs(added_attribs)
+            first_table.add_attribs(added_attribs)
             self.refs.append(Reference(first_table, 
                                        added_attribs, 
                                        second_table, second_table.p_key))
-            first_table.addAttribs(relation_attribs)
+            first_table.add_attribs(relation_attribs)
             for attr in multival_attribs:
-                self.addMultiValued(first_table.name, attr)
+                self.add_multi_valued(first_table.name, attr)
         else:
             added_attribs = [self._fk_name(tok, first) for tok in first_table.p_key]
-            second_table.addAttribs(added_attribs)
+            second_table.add_attribs(added_attribs)
             self.refs.append(Reference(second_table, 
                                        added_attribs,
                                        first_table, first_table.p_key))
-            second_table.addAttribs(relation_attribs)
+            second_table.add_attribs(relation_attribs)
             for attr in multival_attribs:
-                self.addMultiValued(second_table.name, attr)
+                self.add_multi_valued(second_table.name, attr)
         
     # Add a binary 1:N relationship.
-    def addOneToMany(self, relation : Relationship):
+    def add_one_to_many(self, relation : Relationship):
         """Map a binary 1:N relationship.
 
         Assumptions:
@@ -305,7 +305,7 @@ class TableRegistry:
             - `ValueError`: if the relationship is not a binary 1:N link set.
         """
         if len(relation.links) != 2:
-            raise ValueError("addOneToMany only works on binary 1:N relationships")
+            raise ValueError("add_one_to_many only works on binary 1:N relationships")
         
         first = relation.links[0]
         second = relation.links[1]
@@ -316,34 +316,34 @@ class TableRegistry:
         relation_attribs = []
         multival_attribs = []
         for attr in relation.attributes:
-            if attr.isMultiValued:
+            if attr.is_multi_valued:
                 multival_attribs.append(attr)
                 continue
-            relation_attribs.extend(self.__flattenAttrib(attr))
+            relation_attribs.extend(self.__flatten_attrib(attr))
 
 
         if first.cardinality == 'N':
             added_attribs = [self._fk_name(tok, second) for tok in second_table.p_key]
-            first_table.addAttribs(added_attribs)
+            first_table.add_attribs(added_attribs)
             self.refs.append(Reference(first_table, 
                                        added_attribs, 
                                        second_table, second_table.p_key))
 
-            first_table.addAttribs(relation_attribs)
+            first_table.add_attribs(relation_attribs)
             for attr in multival_attribs:
-                self.addMultiValued(first_table.name, attr)
+                self.add_multi_valued(first_table.name, attr)
         else:
             added_attribs = [self._fk_name(tok, first) for tok in first_table.p_key]
-            second_table.addAttribs(added_attribs)
+            second_table.add_attribs(added_attribs)
             self.refs.append(Reference(second_table, 
                                        added_attribs,
                                        first_table, first_table.p_key))
-            second_table.addAttribs(relation_attribs)
+            second_table.add_attribs(relation_attribs)
             for attr in multival_attribs:
-                self.addMultiValued(second_table.name, attr)
+                self.add_multi_valued(second_table.name, attr)
     
     # Add an N:M relationship or its multivalued attributes.
-    def addManyToMany(self, relation : Relationship):
+    def add_many_to_many(self, relation : Relationship):
         """Create a junction table for a binary many-to-many relationship.
 
         Assumptions:
@@ -354,7 +354,7 @@ class TableRegistry:
             - `ValueError`: if the relationship is not a binary M:N relationship.
         """
         if len(relation.links) != 2:
-            raise ValueError("addManyToMany only works on binary M:N relationships")
+            raise ValueError("add_many_to_many only works on binary M:N relationships")
         
         first = relation.links[0]
         second = relation.links[1]
@@ -371,14 +371,14 @@ class TableRegistry:
         added_attribs = []
         added_attribs.extend(normalized_first_pkey + normalized_second_pkey)
 
-        rel_table.setPrimaryKey(added_attribs)
+        rel_table.set_primary_key(added_attribs)
         self.tables[rel_table.name] = rel_table
 
         for attr in relation.attributes:
-            if attr.isMultiValued:
-                self.addMultiValued(rel_table.name, attr)
+            if attr.is_multi_valued:
+                self.add_multi_valued(rel_table.name, attr)
             else:
-                added_attribs.extend(self.__flattenAttrib(attr))
+                added_attribs.extend(self.__flatten_attrib(attr))
 
         # Link the junction table to both entity tables.
         self.refs.append(Reference(rel_table,
@@ -390,11 +390,11 @@ class TableRegistry:
                                    second_table, second_table.p_key))
 
 
-        self.tables[rel_table.name].addAttribs(added_attribs)
+        self.tables[rel_table.name].add_attribs(added_attribs)
         # Add atomic attributes and flattened composites to the relationship table.
     
 
-    def addNary(self, relation : Relationship):
+    def add_nary(self, relation : Relationship):
         """Create a relationship table for an n-ary relation.
 
         Assumptions:
@@ -406,7 +406,7 @@ class TableRegistry:
         """
 
         if len(relation.links) <= 2:
-            raise ValueError("addNary works on relations with degree more than 2")
+            raise ValueError("add_nary works on relations with degree more than 2")
         identified = relation.identifies[0] if relation.identifies else None
 
         p_keys = []
@@ -414,19 +414,19 @@ class TableRegistry:
         multivalued_attribs = []
 
         for attr in relation.attributes:
-            if attr.isDerived:
+            if attr.is_derived:
                 continue
 
-            if attr.isMultiValued:
+            if attr.is_multi_valued:
                 multivalued_attribs.append(attr)
                 continue  # Add multivalued attributes later.
 
-            relation_attribs.extend(self.__flattenAttrib(attr))
+            relation_attribs.extend(self.__flatten_attrib(attr))
 
-        def isStrong(link : Link):
+        def is_strong(link : Link):
                 return link.entity != identified
             
-        strong_links = list(filter(isStrong, relation.links))
+        strong_links = list(filter(is_strong, relation.links))
         for link in strong_links:
             added_pkeys = [self._fk_name(tok, link) for tok in self.tables[link.entity].p_key]
             p_keys.append(added_pkeys)
@@ -438,27 +438,27 @@ class TableRegistry:
         
         # Connect the table to each strong entity and add its corresponding attributes.
         for p_key, link in zip(p_keys, strong_links):
-            rel_table.addAttribs(p_key)
+            rel_table.add_attribs(p_key)
             self.refs.append(Reference(rel_table, 
                                     p_key, 
                                     self.tables[link.entity], self.tables[link.entity].p_key))
 
         
-        rel_table.setPrimaryKey(rel_table.attribs) 
+        rel_table.set_primary_key(rel_table.attribs) 
 
         if identified:
-            self.tables[identified].addAttribs(rel_table.attribs)
-            self.tables[identified].setPrimaryKey(self.tables[identified].p_key + rel_table.attribs)
+            self.tables[identified].add_attribs(rel_table.attribs)
+            self.tables[identified].set_primary_key(self.tables[identified].p_key + rel_table.attribs)
         # The table currently contains only strong-entity primary keys.
 
-        rel_table.addAttribs(relation_attribs)
+        rel_table.add_attribs(relation_attribs)
         # Add simple attributes and flattened composites.
 
         self.tables[table_name] = rel_table
         # Register the relationship table.
 
         for attr in multivalued_attribs:
-            self.addMultiValued(table_name, attr)
+            self.add_multi_valued(table_name, attr)
         # Add multivalued attributes.
         
         if identified:
@@ -467,7 +467,7 @@ class TableRegistry:
                                     rel_table,
                                     rel_table.p_key))
     
-    def fromSchema(self, schema : Schema):
+    def from_schema(self, schema : Schema):
         """Convert a schema into a normalized relational registry.
 
         Assumptions:
@@ -484,14 +484,14 @@ class TableRegistry:
         # Add strong and weak entities; weak keys may be incomplete.
         # Add atomic attributes and flattened composites; handle multivalued attributes later.
         for entity in schema.entities:
-            self.addEntity(entity)
+            self.add_entity(entity)
 
         identifying_relations = list(filter(lambda relation : relation.identifies, schema.relationships))
         standard_relations = list(filter(lambda relation : not relation.identifies, schema.relationships))
 
         # Resolve identifying relationships first to establish all entity keys.
         for relation in identifying_relations:
-            self.addIdentifying(relation)
+            self.add_identifying(relation)
 
         # Map remaining relationships, including their attributes.
         for relation in standard_relations:
@@ -499,19 +499,19 @@ class TableRegistry:
                 first_cardinality = relation.links[0].cardinality
                 second_cardinality = relation.links[1].cardinality
                 if first_cardinality == '1' and second_cardinality == '1':
-                    self.addOneToOne(relation)
+                    self.add_one_to_one(relation)
                 elif first_cardinality == '1' or second_cardinality == '1':
-                    self.addOneToMany(relation)
+                    self.add_one_to_many(relation)
                 else:
-                    self.addManyToMany(relation)
+                    self.add_many_to_many(relation)
             else:
-                self.addNary(relation)
+                self.add_nary(relation)
 
         for entity in schema.entities:
             for attr in entity.attributes:
-                if not attr.isMultiValued or attr.isDerived: 
+                if not attr.is_multi_valued or attr.is_derived: 
                     continue
-                self.addMultiValued(entity.name, attr)
+                self.add_multi_valued(entity.name, attr)
 
 
 

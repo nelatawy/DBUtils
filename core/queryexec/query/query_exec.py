@@ -246,7 +246,7 @@ class QueryExecuter:
     def __init__(self):
         self.tables = {}
 
-    def addTable(self, table: MappedTable):
+    def add_table(self, table: MappedTable):
         if not table.name or not table.name.strip():
             raise ValueError("A table must have a non-empty name")
         self.tables[table.name] = table
@@ -336,7 +336,7 @@ def main():
 
     evaluator = QueryExecuter()
     for table in (employees, departments, archived_employees):
-        evaluator.addTable(table)
+        evaluator.add_table(table)
 
     employee_names = ["employee_key", "employee_name", "employee_dept_id", "annual_salary"]
     department_names = ["department_id", "department_name", "department_city"]

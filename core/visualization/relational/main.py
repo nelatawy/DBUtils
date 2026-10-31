@@ -22,7 +22,7 @@ def main():
         return
 
     table_reg: TableRegistry = TableRegistry()
-    table_reg.fromSchema(schema)
+    table_reg.from_schema(schema)
     for name in table_reg.tables:
         print(name + str(table_reg.tables[name].attribs))
 

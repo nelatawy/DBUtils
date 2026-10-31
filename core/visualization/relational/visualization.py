@@ -12,7 +12,7 @@ class RelationalVisualizer:
     """Render a normalized relational schema as a Graphviz diagram.
 
     Assumptions:
-        - `fromSchema()` has populated `TableRegistry.tables` and `TableRegistry.refs`.
+        - `from_schema()` has populated `TableRegistry.tables` and `TableRegistry.refs`.
         - Each `Table` stores primary keys in `p_key` and visible columns in `attribs`.
         - Each reference has normalized source and destination tables and attribute lists.
 

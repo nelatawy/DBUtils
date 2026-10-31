@@ -1,28 +1,33 @@
 from __future__ import annotations
 import re
 from typing import Literal, Optional
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, model_validator, ConfigDict
 
 class Attribute(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
     name: str = Field(
         ...,
         min_length=1,
         description="The identifier name of the attribute. Keep it concise, camelCase or PascalCase, no generic spaces.",
     )
-    isPrimaryKey: bool = Field(
+    is_primary_key: bool = Field(
         default= False,
+        alias="isPrimaryKey",
         description="Set to true ONLY if this attribute uniquely identifies the parent Entity.",
     )
-    isPartialKey: bool = Field(
+    is_partial_key: bool = Field(
         default= False,
+        alias="isPartialKey",
         description="Set to true ONLY if this attribute is a partial key for this weak entity"
     )
-    isMultiValued: bool = Field(
+    is_multi_valued: bool = Field(
         default= False,
+        alias="isMultiValued",
         description="Set to true if an instance can contain multiple values for this attribute",
     )
-    isDerived: bool = Field(
+    is_derived: bool = Field(
         default= False,
+        alias="isDerived",
         description="Set to true if the attribute value is an aggregate that can be calculated or pulled from other attributes.",
     )
     composite: list[Attribute | str] = Field(
@@ -33,10 +38,10 @@ class Attribute(BaseModel):
     # Validate the parsed object against attribute constraints.
     @model_validator(mode="after")
     def check_attribute_logic(self) -> Attribute:
-        if self.isPrimaryKey and self.isMultiValued:
+        if self.is_primary_key and self.is_multi_valued:
             raise ValueError("Primary key can't be multivalued")
         
-        if self.isPrimaryKey and self.isPartialKey:
+        if self.is_primary_key and self.is_partial_key:
             raise ValueError("Primary key can't be a partial key")
         
         if not self.name.strip():
@@ -52,13 +57,16 @@ Attribute.model_rebuild()
 
     
 class Entity(BaseModel): 
+    model_config = ConfigDict(populate_by_name=True)
+
     name: str = Field(
         ...,
         min_length=1,
         description="The singular name of the Entity",
     )
-    isWeak : bool = Field(
+    is_weak : bool = Field(
         default=False,
+        alias="isWeak",
         description="declares wether or not the entity is a weak entity"
     )
     attributes: list[Attribute] = Field(
@@ -71,14 +79,14 @@ class Entity(BaseModel):
         if not self.name.strip():
             raise ValueError("Entity must have a name")
         
-        hasPrimaryKey = False
+        has_primary_key = False
         for attr in self.attributes:
-            if attr.isPartialKey and not self.isWeak:
+            if attr.is_partial_key and not self.is_weak:
                 raise ValueError("can't have a partial key for a non-weak entity")
-            if attr.isPrimaryKey:
-                hasPrimaryKey = True
+            if attr.is_primary_key:
+                has_primary_key = True
 
-        if not hasPrimaryKey and not self.isWeak:
+        if not has_primary_key and not self.is_weak:
             raise ValueError("Entity doesn't have a primary key and isn't declared as a weak entity")
         
         return self
@@ -163,7 +171,7 @@ class Schema(BaseModel):
             if entity.name in entity_set:
                 raise ValueError("Duplicate Entities with the same name")
             
-            if entity.isWeak:
+            if entity.is_weak:
                 unidentified_entities.add(entity.name)
 
             entity_set.add(entity.name)
