@@ -9,7 +9,7 @@ from core.queryexec.ast_models import *
 class MappedTable:
     def __init__(self, table_name : str, table_rows : TableState):
         self.name = table_name
-        self.attribs = list(table_rows.root[0].root.keys()) if table_rows else None
+        self.attribs = list(table_rows.root[0].root.keys()) if table_rows and len(table_rows.root) else None
         self.rows = []
 
         if not table_rows:
@@ -143,13 +143,15 @@ class TableUtils:
         res_table = MappedTable("",None)
         res_table.set_attributes(first.attribs)
 
-        first_rows = set([tuple(row) for row in first.rows])
-        second_rows =set([tuple(row) for row in second.rows])
-
-        final_rows = [list(row) for row in first_rows.intersection(second_rows)]
-        # Add the resulting rows.
-        for row in final_rows:
-            res_table.add_row(row)
+        second_rows =set(tuple(row) for row in second.rows)
+        seen = set()
+        for row in first.rows:
+            key = tuple(row)
+            if key in seen:
+                continue
+            seen.add(key)
+            if key in second_rows:
+                res_table.add_row(row)
         
         return res_table
 
@@ -161,13 +163,16 @@ class TableUtils:
         res_table = MappedTable("",None)
         res_table.set_attributes(first.attribs)
 
-        first_rows = set([tuple(row) for row in first.rows])
-        second_rows =set([tuple(row) for row in second.rows])
+        second_rows =set(tuple(row) for row in second.rows)
+        seen = set()
 
-        final_rows = [list(row) for row in first_rows.difference(second_rows)]
-        # Add the resulting rows.
-        for row in final_rows:
-            res_table.add_row(row)
+        for row in first.rows:
+            key = tuple(row)
+            if key in seen:
+                continue
+            seen.add(key)
+            if key not in second_rows:
+                res_table.add_row(row)
         
         return res_table
 
@@ -214,7 +219,7 @@ class TableUtils:
 
             for row in table.rows:
                 val = row[attr_idx]
-                if not aggr_res:
+                if aggr_res is None:
                     aggr_res = val
                     continue
 

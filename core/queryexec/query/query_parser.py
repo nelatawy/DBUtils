@@ -104,7 +104,7 @@ class QueryParser:
                     extra = ConditionParser.parse(op.split("[")[1][:-1])
                     op = op.split("[")[0]
                 elif "{" in op:
-                    extra = op.split("{")[1][:-1].split(",")
+                    extra = [part.strip() for part in op.split("{")[1][:-1].split(",")]
                     op = op.split("{")[0]
 
                 return UnaryNode(op, operand, extra)
