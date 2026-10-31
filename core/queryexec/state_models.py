@@ -36,3 +36,13 @@ class TableState(RootModel[List[Row]]):
 
 class DatabaseState(RootModel[Dict[str, TableState]]):
     pass
+
+
+def main():
+    test_case = ""
+    with open("tests/table_state_test.json","r") as f:
+        test_case = f.read()
+    state = DatabaseState.model_validate_json(test_case)
+
+if __name__ == '__main__':
+    main()

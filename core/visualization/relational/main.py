@@ -11,7 +11,7 @@ import graphviz
 
 def main():
     test_json = ""
-    with open("/home/nelatawy/Projects/DBVisualizer/tests/04_participation.json", "r") as f:
+    with open("tests/04_participation.json", "r") as f:
         test_json = f.read()
 
     schema: Schema = None
