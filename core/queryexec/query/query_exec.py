@@ -209,25 +209,23 @@ class TableUtils:
             aggr_func = TableUtils.__get_aggr_func(aggr)
 
             attr_idx = table.attribs.index(aggr_attr)
-            aggr_res = None if aggr_func != "AVG" else 0
+            aggr_res = None
             
 
             for row in table.rows:
                 val = row[attr_idx]
+                if not aggr_res:
+                    aggr_res = val
+                    continue
+
                 if aggr_func == "AVG":
                     aggr_res += val
 
                 elif aggr_func == "MAX":
-                    if not aggr_res:
-                        aggr_res = val
-                    else:
-                        aggr_res = max(aggr_res, val)
+                    aggr_res = max(aggr_res, val)
 
                 elif aggr_func == "MIN":
-                    if not aggr_res:
-                        aggr_res = val
-                    else:
-                        aggr_res = min(aggr_res, val)
+                    aggr_res = min(aggr_res, val)
 
                 else:
                     raise ValueError(f"Aggregation of type {aggr_func} is not allowed")
